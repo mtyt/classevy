@@ -339,7 +339,7 @@ class Plan():
             # now the current student has a final_assignment.
             if verbose:
                 print('Final assignment:', final_assignment)
-            students.loc[i, 'final_assignment'] = final_assignment
+            students.loc[i, 'final_assignment'] = int(final_assignment)
             # verify if any of the previous students now have their
             # pref_satisfied.
             self.update_all_pref_sat(students.loc[:i])
@@ -382,7 +382,7 @@ class Plan():
         for option in other_options + [original_assignment]: # if other options
             # don't improve things, go back to original
             new_assignment = option
-            df.loc[i,'final_assignment'] = new_assignment
+            df.loc[i,'final_assignment'] = int(new_assignment)
             Plan.update_pref_sat(df, i)
             if df.loc[i, 'pref_satisfied'] > 1: # break loop as soon as it's ok
                 if verbose:
@@ -409,7 +409,7 @@ class Plan():
             for option in other_options + [original_assignment]: # if other
                 # options don't improve things, go back to original
                 new_assignment = option
-                df.loc[k,'final_assignment'] = new_assignment
+                df.loc[k,'final_assignment'] = int(new_assignment)
                 Plan.update_all_pref_sat(df)
                 new_count_pref_sat = sum(df['pref_satisfied']>0)
                 if new_count_pref_sat > count_pref_sat:

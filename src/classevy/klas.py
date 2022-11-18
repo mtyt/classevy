@@ -80,7 +80,7 @@ class StudentGroup(pd.DataFrame):
                 raise ValueError("The 'preferences' should contain max 3"\
                     f" values but has {len(tup)} for student with number"\
                     f"{row['number']}.")
-                
+
         # All numbers in not_together, together and preferences columns should
         # be inside the student numbers.
         all_numbers = df.index.values
@@ -526,7 +526,7 @@ class Plan():
     def max_class_size(self):
         '''Returns the maximum size of the classes.'''
         return max(self.classes_size)
-    
+
     @property
     def summary(self):
         '''Returns a dict with all the classes_prop and spread_prop.'''

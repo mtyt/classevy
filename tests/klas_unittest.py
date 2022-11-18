@@ -3,6 +3,7 @@ import unittest
 from os import path
 import numpy as np
 import classevy as klas
+
 rng = np.random.default_rng()
 
 data_folder = 'data'
@@ -100,10 +101,10 @@ class TestPlan(unittest.TestCase):
 
             for prop in ['min_class_size', 'max_class_size']:
                 self.assertIsInstance(getattr(p_1, prop), int)
-                
+
             _ = p_1.summary
             p_1.print_summary()
-            
+
 
     def test_do_assignment_improve(self):
         '''Some more tests for functions in class with different conditions.'''

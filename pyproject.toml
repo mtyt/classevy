@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "classevy"
+version = "0.0.1"
+authors = [
+  { name="Maarten Tytgat", email="maarten.tytgat@gmail.com" },
+]
+description = "Divide students over classes, optimizing for equal averages per class
+on certain criteria like gender, test scores, etcusing a genetic algorithm (GA)."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+'numpy>=1.23.4',
+'pandas>=1.5.1',
+'matplotlib>=3.6.2',
+'optime=0.0.1'
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mtyt/classevy"

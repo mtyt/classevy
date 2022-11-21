@@ -2,8 +2,10 @@
 to classes."""
 from functools import partial
 import ast
+from typing import Optional
 from copy import deepcopy
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
 from optime import Population
 
@@ -12,7 +14,7 @@ rng = np.random.default_rng()
 
 
 # some general functions
-def next_best(options, choice):
+def next_best(options: list[int], choice: int) -> int:
     """find the option that equals choice, or the next item or if there is no
     next item, the first item
     """
@@ -28,13 +30,13 @@ class StudentGroup(pd.DataFrame):
     TODO: I think we should get rid of the Student class altogether and
     Studentgroup should just be a DataFrame."""
 
-    required_columns = ["name", "together", "not_together", "preferences"]
+    required_columns: list[str] = ["name", "together", "not_together", "preferences"]
 
     @classmethod
-    def read_csv(cls, path):
+    def read_csv(cls, path: str) -> pd.DataFrame:
         """Correctly parse the CSV file and return a dataframe."""
 
-        def read_tuple(x):
+        def read_tuple(x: str) -> tuple:
             if x == "":
                 x_n = ()
             else:
@@ -43,7 +45,7 @@ class StudentGroup(pd.DataFrame):
                     return tuple([x_n])
             return x_n
 
-        df = pd.read_csv(
+        df: pd.DataFrame = pd.read_csv(
             path,
             delimiter=";",
             converters={
@@ -108,7 +110,7 @@ class StudentGroup(pd.DataFrame):
                         )
         return df
 
-    def __init__(self, data):
+    def __init__(self, data: pd.DataFrame | str) -> None:
         if isinstance(data, pd.DataFrame):
             super().__init__(data)
         elif isinstance(data, str):
@@ -120,12 +122,12 @@ class StudentGroup(pd.DataFrame):
             )
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Size is len."""
         return len(self)
 
     @property
-    def properties(self):
+    def properties(self) -> list[str]:
         """returns a list of column names that are not required_columns."""
         return [col for col in self.columns if col not in self.required_columns]
 
@@ -135,7 +137,12 @@ class Klas:
     StudentGroup but a Studentgroup doesn't always have to be a Klas.
     """
 
-    def __init__(self, name=None, students=None, conditions=None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        students: Optional[str | pd.DataFrame | StudentGroup] = None,
+        conditions: Optional[list[str]] = None,
+    ) -> None:
         self.name = name
         if students is None:
             students = StudentGroup(
@@ -155,13 +162,13 @@ class Klas:
             conditions = []
         self.conditions = conditions
 
-    def print_names(self):
+    def print_names(self) -> None:
         """Print all the names."""
         for name in self.students["name"]:
             print(name)
 
     @property
-    def size(self):
+    def size(self) -> int:
         """return the length of the class.students."""
         return len(self.students)
 
@@ -171,40 +178,40 @@ class Plan:
     evaluated based on some criteria.
     """
 
-    def __init__(self, students, n_classes=2, assignment=None):
+    def __init__(
+        self,
+        students: StudentGroup,
+        n_classes: int = 2,
+        assignment: Optional[list[int]] = None,
+    ):
         if not isinstance(students, StudentGroup):
             raise TypeError("students should be a StudentGroup")
         self.students = StudentGroup(deepcopy(students))
         self.n_classes = n_classes
         if assignment is None:
-            assignment = np.random.randint(0, n_classes, len(students))
+            assignment = list(np.random.randint(0, n_classes, len(students)))
         self.assignment = assignment  # use setter
 
     @property
-    def assignment(self):
-        '''returns self._assignment.'''
+    def assignment(self) -> list[int]:
+        """returns self._assignment."""
         return self._assignment
 
     @assignment.setter
-    def assignment(self, val):
+    def assignment(self, val: list[int]) -> None:
         """Set the assignment and immediately calculate the final assignment."""
         self._assignment = val
         self.init_students_df()
         self.do_assignment()
         self.improve_preferences()
 
-    @property
-    def students(self):
-        """standard getter"""
-        return self._students
-
-    def spreadprops(self, prop):
+    def spreadprops(self, prop: str) -> float:
         """Returns the standard dev of the mean value of the propery of all
         the classes.
         """
         return np.array(self.allprops(prop)).std()
 
-    def allprops(self, prop):
+    def allprops(self, prop: str) -> list[int | float]:
         """Returns a list of the mean of property for each class in the list.
         In case of prop='size', return the size of each class.
         """
@@ -213,8 +220,13 @@ class Plan:
         else:
             return [klas.students[prop].mean() for klas in self.classes]
 
+    @property
+    def students(self) -> StudentGroup:
+        """standard getter"""
+        return self._students
+
     @students.setter
-    def students(self, student_group):
+    def students(self, student_group: StudentGroup) -> None:
         # Set property for all StudentGroup.properties:
         # spread_prop for the standard deviation across the mean value of the
         # prop per class.
@@ -229,7 +241,7 @@ class Plan:
             setattr(self.__class__, "classes_" + prop, property(fget=fget_all))
         self._students = student_group
 
-    def init_students_df(self):
+    def init_students_df(self) -> None:
         """Initialize the students with some additional columns."""
         self.students["options"] = [
             list(range(self.n_classes)) for _ in range(len(self.students))
@@ -246,9 +258,9 @@ class Plan:
         ]
 
     @staticmethod
-    def update_pref_sat(df, i):
+    def update_pref_sat(df: pd.DataFrame, i: int) -> None:
         """Update the pref_satistfied column for student with number i"""
-        pref_sat = 0
+        pref_sat: int = 0
         for pref in df.loc[i, "preferences"]:
             if pref in df.index:
                 if df.loc[pref, "final_assignment"] == df.loc[i, "final_assignment"]:
@@ -256,12 +268,12 @@ class Plan:
         df.loc[i, "pref_satisfied"] = pref_sat
 
     @staticmethod
-    def update_all_pref_sat(df):
+    def update_all_pref_sat(df: pd.DataFrame) -> None:
         """Update the pref_satisfied column for all students."""
         for i, _ in df.iterrows():
             Plan.update_pref_sat(df, i)
 
-    def do_assignment(self, flag_prio_prefs=True, verbose=False):
+    def do_assignment(self, flag_prio_prefs: bool = True, verbose: bool = False):
         """Based on:
             - self.assignment (DNA)
             - student's preferences
@@ -275,11 +287,11 @@ class Plan:
         # flag_prio_prefs: prioritize preferences over DNA
         students = self.students
         for i, _ in students.iterrows():
-            student = students.loc[i]
-            curr_options = student["options"]
-            curr_dna = student["dna_assignment"]
-            dna_in_options = curr_dna in curr_options
-            curr_pref = student["preferences"]
+            student: pd.Series = students.loc[i]
+            curr_options: list[int] = student["options"]
+            curr_dna: int = student["dna_assignment"]
+            dna_in_options: bool = curr_dna in curr_options
+            curr_pref: tuple[int] = student["preferences"]
             if verbose:
                 print("\n----------")
                 print(i, student["name"])
@@ -288,14 +300,15 @@ class Plan:
                 print("DNA is in options:", dna_in_options)
                 print("Preferences:", curr_pref)
 
+            final_assignment: int
             if flag_prio_prefs:
                 ## first choose a final_assignment based on
                 # 1. look at previous students in the current student's
                 # preferences.
-                prev_in_pref = [pref for pref in curr_pref if pref < i]
+                prev_in_pref: list[int] = [pref for pref in curr_pref if pref < i]
                 if verbose:
                     print("Previous students in preferences:", prev_in_pref)
-                df_pref = students.loc[prev_in_pref]
+                df_pref: pd.DataFrame = students.loc[prev_in_pref]
                 # now filter by those that have their final_assignment in
                 # curr_options
                 df_pref = df_pref[df_pref["final_assignment"].isin(curr_options)]
@@ -407,17 +420,17 @@ class Plan:
                 students.loc[tog, "options"] = [final_assignment]
 
     @staticmethod
-    def update_class_to_improve_pref(df, i, verbose=False):
+    def update_class_to_improve_pref(df: pd.DataFrame, i: int, verbose=False):
         """Go through the student's options to see if we can change its class
         in order to improve its pref_satisfied to be >0.
         """
-        original_assignment = df.loc[i, "final_assignment"]
-        other_options = [
+        original_assignment: int = df.loc[i, "final_assignment"]
+        other_options: list[int] = [
             j for j in df.loc[i, "options"] if not j == original_assignment
         ]
         for option in other_options + [original_assignment]:  # if other options
             # don't improve things, go back to original
-            new_assignment = option
+            new_assignment: int = option
             df.loc[i, "final_assignment"] = int(new_assignment)
             Plan.update_pref_sat(df, i)
             if df.loc[i, "pref_satisfied"] > 1:  # break loop as soon as it's ok
@@ -430,27 +443,27 @@ class Plan:
                 break
 
     @staticmethod
-    def update_other_students_to_improve_pref(df, i, verbose=False):
+    def update_other_students_to_improve_pref(df: pd.DataFrame, i: int, verbose=False):
         """Go through the student's preferences and see if you can change one
         of their classes in order to improve this student's pref_satisfied.
         The condition for making a change is that the total number of
         pref_satisfied>0 increases.
         """
-        count_pref_sat = sum(df["pref_satisfied"] > 0)
-        preferences = df.loc[i, "preferences"]
+        count_pref_sat: int = sum(df["pref_satisfied"] > 0)
+        preferences: tuple[int] = df.loc[i, "preferences"]
         # can I change one of the prefered student's classes without making
         # their pref_satisfied 0?
         for k in preferences:
-            original_assignment = df.loc[k, "final_assignment"]
-            other_options = [
+            original_assignment: int = df.loc[k, "final_assignment"]
+            other_options: list[int] = [
                 j for j in df.loc[k, "options"] if not j == original_assignment
             ]
             for option in other_options + [original_assignment]:  # if other
                 # options don't improve things, go back to original
-                new_assignment = option
+                new_assignment: int = option
                 df.loc[k, "final_assignment"] = int(new_assignment)
                 Plan.update_all_pref_sat(df)
-                new_count_pref_sat = sum(df["pref_satisfied"] > 0)
+                new_count_pref_sat: int = sum(df["pref_satisfied"] > 0)
                 if new_count_pref_sat > count_pref_sat:
                     if verbose:
                         print(
@@ -463,18 +476,17 @@ class Plan:
                         )
                     break
 
-    def improve_preferences(self, max_tries=10, verbose=False):
+    def improve_preferences(self, max_tries: int = 10, verbose: bool = False) -> None:
         """Check the pref_satisfied of all the students. If not all of them are
         >0, try to improve things by applying the methods
         update_class_to_improve_pref and update_other_students_to_improve_pref
         on each student with pref_satisfied == 0. Keep trying this across all
         students until all are >0 or for a maximum number of times.
         """
-        all_pref_sat = False
-        trying = 0
-        students = self.students
-        count_pref_sat = sum(students["pref_satisfied"] > 0)
-        all_pref_sat = count_pref_sat == len(students)
+        trying: int = 0
+        students: StudentGroup = self.students
+        count_pref_sat: int = sum(students["pref_satisfied"] > 0)
+        all_pref_sat: bool = count_pref_sat == len(students)
         while (not all_pref_sat) and trying < max_tries:
             trying += 1
             if verbose:
@@ -485,7 +497,7 @@ class Plan:
                         print(f'Working on {i}: {students.loc[i, "name"]}')
                     self.update_class_to_improve_pref(students, i, verbose)
                     self.update_all_pref_sat(students)
-                    previous_count = count_pref_sat
+                    previous_count: int = count_pref_sat
                     count_pref_sat = sum(students["pref_satisfied"] > 0)
                     all_pref_sat = count_pref_sat == len(students)
                     if verbose:
@@ -504,11 +516,11 @@ class Plan:
                     count_pref_sat = sum(students["pref_satisfied"] > 0)
                     all_pref_sat = count_pref_sat == len(students)
 
-    def check_assignment(self, raise_exception=False):
+    def check_assignment(self, raise_exception: bool = False) -> bool:
         """Check if all together and not_together as well as preferences are
         satisfied.
         """
-        check = True
+        check: bool = True
         # check that the not_together and together conditions are satisfied:
         for i, stu in self.students.iterrows():
             for not_tog in stu["not_together"]:
@@ -542,22 +554,22 @@ class Plan:
         return check
 
     @property
-    def final_assignment(self):
+    def final_assignment(self) -> list[int]:
         """After assignment algo, return assignments."""
         return self.students["final_assignment"].values
 
     @property
-    def assignment_check(self):
+    def assignment_check(self) -> bool:
         """Returns self.check_assignment() as an attribute."""
         return self.check_assignment()
 
     @property
-    def classes(self):
+    def classes(self) -> list[Klas]:
         """Return the classes of the Plan, with all the students assigned to
         them.
         """
-        class_list = list(range(int(max(self.final_assignment) + 1)))
-        classes = []
+        class_list: list = list(range(int(max(self.final_assignment) + 1)))
+        classes: list = []
         for i in class_list:
             classes.append(
                 Klas(
@@ -568,7 +580,7 @@ class Plan:
             )
         return classes
 
-    def print_classes(self):
+    def print_classes(self) -> None:
         """Print the name of each class and the students in it."""
         for klas in self.classes:
             print(
@@ -577,17 +589,17 @@ class Plan:
             )
 
     @property
-    def min_class_size(self):
+    def min_class_size(self) -> int:
         """Returns the minimum size of the classes."""
         return min(self.classes_size)
 
     @property
-    def max_class_size(self):
+    def max_class_size(self) -> int:
         """Returns the maximum size of the classes."""
         return max(self.classes_size)
 
     @property
-    def summary(self):
+    def summary(self) -> dict:
         """Returns a dict with all the classes_prop and spread_prop."""
         summary_dict = {}
         for prop in self.students.properties:
@@ -595,7 +607,7 @@ class Plan:
             summary_dict["spread_" + prop] = getattr(self, "spread_" + prop)
         return summary_dict
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print the summary."""
         for prop, val in self.summary.items():
             if "classes" in prop:
@@ -607,8 +619,20 @@ class Plan:
 class PlanPopulation(Population):
     """Inherits from optime's Population but tailored for Plan."""
 
-    def __init__(self, students, n_pop, n_classes, goals_dict, conditions):
-        plans = [Plan(students, n_classes) for _ in np.arange(n_pop)]
-        Plan.dna = Plan.assignment
-        Plan.parent_props = ["students", "n_classes"]
+    def __init__(
+        self,
+        students: StudentGroup,
+        n_pop: int,
+        n_classes: int,
+        goals_dict: dict,
+        conditions: list,
+    ):
+        class PlanGA(Plan):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+
+            dna = Plan.assignment
+            parent_props = ["students", "n_classes"]
+
+        plans = [PlanGA(students, n_classes) for _ in np.arange(n_pop)]
         super().__init__(plans, goals_dict, conditions)

@@ -2,6 +2,7 @@
 import unittest
 from os import path
 import numpy as np
+import pandas as pd
 import classevy as klas
 
 rng = np.random.default_rng()
@@ -125,6 +126,16 @@ class TestPlan(unittest.TestCase):
             ass_check = p_1.assignment_check
             self.assertIsInstance(ass_check, bool)
 
+class TestPlanPopulation(unittest.TestCase):
+    '''Tests for PlanPopulation class.'''
+    def test(self):
+        '''General test'''
+        students = klas.StudentGroup(path.join(data_folder,
+                                                   'students.csv'))
+        goals_dict = {f'spread_{prop}':'min' for prop in students.properties}
+        pop = klas.PlanPopulation(students,20, 2, goals_dict=goals_dict,
+                                  conditions=['assignment_check'])
+        self.assertIsInstance(pop.df, pd.DataFrame)
 
 if __name__ == '__main__':
     unittest.main()

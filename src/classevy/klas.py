@@ -5,6 +5,7 @@ import ast
 from copy import deepcopy
 import numpy as np
 import pandas as pd
+from optime import Population
 
 
 rng = np.random.default_rng()
@@ -162,7 +163,16 @@ class Plan():
         self.n_classes = n_classes
         if assignment is None:
             assignment = np.random.randint(0, n_classes, len(students))
-        self.assignment = assignment
+        self.assignment = assignment # use setter
+
+    @property
+    def assignment(self):
+        return self._assignment
+
+    @assignment.setter
+    def assignment(self, val):
+        '''Set the assignment and immediately calculate the final assignment.'''
+        self._assignment = val
         self.init_students_df()
         self.do_assignment()
         self.improve_preferences()
@@ -543,3 +553,12 @@ class Plan():
                 print('Mean', prop, 'per class:', val)
             elif 'spread' in prop:
                 print('Spread of mean', prop, 'over classes:', val)
+
+
+class PlanPopulation(Population):
+    '''Inherits from optime's Population but tailored for Plan.'''
+    def __init__(self, students, n_pop, n_classes, goals_dict, conditions):
+        plans = [Plan(students, n_classes) for _ in np.arange(n_pop)]
+        Plan.dna = Plan.assignment
+        Plan.parent_props = ['students', 'n_classes']
+        super().__init__(plans, goals_dict, conditions)

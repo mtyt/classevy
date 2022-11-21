@@ -1,5 +1,5 @@
-'''Module for creating classes with students, and plans which assign students
-to classes.'''
+"""Module for creating classes with students, and plans which assign students
+to classes."""
 from functools import partial
 import ast
 from copy import deepcopy
@@ -12,87 +12,100 @@ rng = np.random.default_rng()
 
 
 # some general functions
-def next_best(options,choice):
-    '''find the option that equals choice, or the next item or if there is no
+def next_best(options, choice):
+    """find the option that equals choice, or the next item or if there is no
     next item, the first item
-    '''
-    checks = [op>=choice for op in options]
+    """
+    checks = [op >= choice for op in options]
     idx = np.argmax(np.array(checks))
     return options[idx]
 
 
 class StudentGroup(pd.DataFrame):
-    '''Any list of Students. We can do some basic calculations on this list.
+    """Any list of Students. We can do some basic calculations on this list.
     TODO: Currently, df is not automatically updated. This can cause issues if
     we add students after init.
     TODO: I think we should get rid of the Student class altogether and
-    Studentgroup should just be a DataFrame.'''
+    Studentgroup should just be a DataFrame."""
 
-    required_columns = ['name', 'together', 'not_together', 'preferences']
+    required_columns = ["name", "together", "not_together", "preferences"]
 
     @classmethod
     def read_csv(cls, path):
-        '''Correctly parse the CSV file and return a dataframe.'''
+        """Correctly parse the CSV file and return a dataframe."""
+
         def read_tuple(x):
-            if x == '':
+            if x == "":
                 x_n = ()
             else:
                 x_n = ast.literal_eval(x)
                 if not isinstance(x_n, tuple):
                     return tuple([x_n])
             return x_n
-        df = pd.read_csv(path, delimiter=';',
-                                      converters={'not_together':read_tuple,
-                                                  'together':read_tuple,
-                                                  'preferences':read_tuple}
-                                     )
-        df = df.set_index('number', verify_integrity=True)
+
+        df = pd.read_csv(
+            path,
+            delimiter=";",
+            converters={
+                "not_together": read_tuple,
+                "together": read_tuple,
+                "preferences": read_tuple,
+            },
+        )
+        df = df.set_index("number", verify_integrity=True)
 
         # Now perform some checks on the data.
         # The columns, not_together, together, preferences and  name should
         # be present
-        if 'name' not in df.columns:
+        if "name" not in df.columns:
             raise ValueError('No column "name" found.')
-        if 'not_together' not in df.columns:
+        if "not_together" not in df.columns:
             raise ValueError('No column "not_together" found.')
-        if 'together' not in df.columns:
+        if "together" not in df.columns:
             raise ValueError('No column "together" found.')
-        if 'preferences' not in df.columns:
+        if "preferences" not in df.columns:
             raise ValueError('No column "preferences" found.')
 
         # each together and not_together entry should be reciprocal
         for number, row in df.iterrows():
-            for col in ['not_together', 'together']:
+            for col in ["not_together", "together"]:
                 for other in row[col]:
                     other_student = df.loc[other]
                     if not number in other_student[col]:
-                        raise ValueError(f'Student with number {number} is'\
-                            f' not in Student with number {other} {col} list'\
-                            f' but {other} is in {number}')
+                        raise ValueError(
+                            f"Student with number {number} is"
+                            f" not in Student with number {other} {col} list"
+                            f" but {other} is in {number}"
+                        )
 
         # the preferences should be tuples with 0 to 3 numbers and not contain
         # the student's own
         for _, row in df.iterrows():
-            tup = row['preferences']
+            tup = row["preferences"]
             if not isinstance(tup, tuple):
-                raise TypeError(f"Expected a tuple but got {type(tup)}. Is"\
-                    " the 'preferences' column correctly formatted?")
+                raise TypeError(
+                    f"Expected a tuple but got {type(tup)}. Is"
+                    " the 'preferences' column correctly formatted?"
+                )
             if not len(tup) < 4:
-                raise ValueError("The 'preferences' should contain max 3"\
-                    f" values but has {len(tup)} for student with number"\
-                    f"{row['number']}.")
+                raise ValueError(
+                    "The 'preferences' should contain max 3"
+                    f" values but has {len(tup)} for student with number"
+                    f"{row['number']}."
+                )
 
         # All numbers in not_together, together and preferences columns should
         # be inside the student numbers.
         all_numbers = df.index.values
-        cols = ['not_together', 'together', 'preferences']
+        cols = ["not_together", "together", "preferences"]
         for col in cols:
             for tup in df[col]:
                 if len(tup):
                     check = all([num in all_numbers for num in tup])
                     if not check:
-                        raise ValueError(f"In {col}, there's a value that's"\
-                            " not a student number")
+                        raise ValueError(
+                            f"In {col}, there's a value that's" " not a student number"
+                        )
         return df
 
     def __init__(self, data):
@@ -102,59 +115,61 @@ class StudentGroup(pd.DataFrame):
             df_students = StudentGroup.read_csv(data)
             super().__init__(df_students)
         else:
-            raise TypeError("Input to StudentGroup should be DataFrame"\
-                "or str (path to CSV file")
+            raise TypeError(
+                "Input to StudentGroup should be DataFrame or str (path to CSV file"
+            )
 
     @property
     def size(self):
-        '''Size is len.'''
+        """Size is len."""
         return len(self)
 
     @property
     def properties(self):
-        '''returns a list of column names that are not required_columns.'''
-        return [col for col in self.columns
-                if col not in self.required_columns]
+        """returns a list of column names that are not required_columns."""
+        return [col for col in self.columns if col not in self.required_columns]
 
 
-class Klas():
-    '''Class for a Klas, which is a class as in it has students. It has a
+class Klas:
+    """Class for a Klas, which is a class as in it has students. It has a
     StudentGroup but a Studentgroup doesn't always have to be a Klas.
-    '''
+    """
 
     def __init__(self, name=None, students=None, conditions=None):
         self.name = name
         if students is None:
-            students = StudentGroup(pd.DataFrame(columns=['number']
-                                            +StudentGroup.required_columns))
+            students = StudentGroup(
+                pd.DataFrame(columns=["number"] + StudentGroup.required_columns)
+            )
         elif isinstance(students, str):
             students = StudentGroup(students)
         elif isinstance(students, pd.DataFrame):
             students = StudentGroup(students)
         else:
             if not isinstance(students, StudentGroup):
-                raise TypeError("students argument must be StudentGroup,"\
-                    " None, str or DataFrame")
+                raise TypeError(
+                    "students argument must be StudentGroup, None, str or DataFrame"
+                )
         self.students = students
         if conditions is None:
             conditions = []
         self.conditions = conditions
 
     def print_names(self):
-        '''Print all the names.'''
-        for name in self.students['name']:
+        """Print all the names."""
+        for name in self.students["name"]:
             print(name)
 
     @property
     def size(self):
-        '''return the length of the class.students.'''
+        """return the length of the class.students."""
         return len(self.students)
 
 
-class Plan():
-    '''A Plan is a particular assignment of students over classes. It can be
+class Plan:
+    """A Plan is a particular assignment of students over classes. It can be
     evaluated based on some criteria.
-    '''
+    """
 
     def __init__(self, students, n_classes=2, assignment=None):
         if not isinstance(students, StudentGroup):
@@ -163,15 +178,16 @@ class Plan():
         self.n_classes = n_classes
         if assignment is None:
             assignment = np.random.randint(0, n_classes, len(students))
-        self.assignment = assignment # use setter
+        self.assignment = assignment  # use setter
 
     @property
     def assignment(self):
+        '''returns self._assignment.'''
         return self._assignment
 
     @assignment.setter
     def assignment(self, val):
-        '''Set the assignment and immediately calculate the final assignment.'''
+        """Set the assignment and immediately calculate the final assignment."""
         self._assignment = val
         self.init_students_df()
         self.do_assignment()
@@ -179,20 +195,20 @@ class Plan():
 
     @property
     def students(self):
-        '''standard getter'''
+        """standard getter"""
         return self._students
 
     def spreadprops(self, prop):
-        '''Returns the standard dev of the mean value of the propery of all
+        """Returns the standard dev of the mean value of the propery of all
         the classes.
-        '''
+        """
         return np.array(self.allprops(prop)).std()
 
     def allprops(self, prop):
-        '''Returns a list of the mean of property for each class in the list.
+        """Returns a list of the mean of property for each class in the list.
         In case of prop='size', return the size of each class.
-        '''
-        if prop == 'size':
+        """
+        if prop == "size":
             return [klas.size for klas in self.classes]
         else:
             return [klas.students[prop].mean() for klas in self.classes]
@@ -203,362 +219,396 @@ class Plan():
         # spread_prop for the standard deviation across the mean value of the
         # prop per class.
         if not isinstance(student_group, StudentGroup):
-            raise TypeError('Value must be a StudentGroup,'\
-                                f' but is {type(student_group)}')
-        for prop in student_group.properties + ['size']:
+            raise TypeError(
+                "Value must be a StudentGroup," f" but is {type(student_group)}"
+            )
+        for prop in student_group.properties + ["size"]:
             fget_spread = partial(self.__class__.spreadprops, prop=prop)
-            setattr(self.__class__, 'spread_' + prop,
-                    property(fget=fget_spread))
+            setattr(self.__class__, "spread_" + prop, property(fget=fget_spread))
             fget_all = partial(self.__class__.allprops, prop=prop)
-            setattr(self.__class__, 'classes_' + prop,
-                    property(fget=fget_all))
+            setattr(self.__class__, "classes_" + prop, property(fget=fget_all))
         self._students = student_group
 
     def init_students_df(self):
-        '''Initialize the students with some additional columns.'''
-        self.students['options'] = [list(range(self.n_classes)) for  _
-                                       in range(len(self.students))]
-        self.students['dna_assignment'] = self.assignment
-        self.students['final_assignment'] = np.zeros(len(self.students))
-        self.students['pref_satisfied'] = np.zeros(len(self.students))
+        """Initialize the students with some additional columns."""
+        self.students["options"] = [
+            list(range(self.n_classes)) for _ in range(len(self.students))
+        ]
+        self.students["dna_assignment"] = self.assignment
+        self.students["final_assignment"] = np.zeros(len(self.students))
+        self.students["pref_satisfied"] = np.zeros(len(self.students))
         # add these here so they don't show up in students.properties:
         self.students.required_columns = self.students.required_columns + [
-                                               'options', 'dna_assignment',
-                                               'final_assignment',
-                                               'pref_satisfied']
+            "options",
+            "dna_assignment",
+            "final_assignment",
+            "pref_satisfied",
+        ]
 
     @staticmethod
     def update_pref_sat(df, i):
-        '''Update the pref_satistfied column for student with number i'''
+        """Update the pref_satistfied column for student with number i"""
         pref_sat = 0
-        for pref in df.loc[i, 'preferences']:
+        for pref in df.loc[i, "preferences"]:
             if pref in df.index:
-                if (df.loc[pref, 'final_assignment']
-                    == df.loc[i, 'final_assignment']):
+                if df.loc[pref, "final_assignment"] == df.loc[i, "final_assignment"]:
                     pref_sat += 1
-        df.loc[i,'pref_satisfied'] = pref_sat
+        df.loc[i, "pref_satisfied"] = pref_sat
 
     @staticmethod
     def update_all_pref_sat(df):
-        '''Update the pref_satisfied column for all students.'''
+        """Update the pref_satisfied column for all students."""
         for i, _ in df.iterrows():
             Plan.update_pref_sat(df, i)
 
     def do_assignment(self, flag_prio_prefs=True, verbose=False):
-        '''Based on:
+        """Based on:
             - self.assignment (DNA)
             - student's preferences
             - together and not_together columns
         try to find an assignmenet of students into classes that satisfies the
         preferences and together and not_together requirements. DNA takes a
         second place.
-        '''
+        """
         self.init_students_df()
         # script flags:
         # flag_prio_prefs: prioritize preferences over DNA
         students = self.students
         for i, _ in students.iterrows():
             student = students.loc[i]
-            curr_options = student['options']
-            curr_dna = student['dna_assignment']
+            curr_options = student["options"]
+            curr_dna = student["dna_assignment"]
             dna_in_options = curr_dna in curr_options
-            curr_pref = student['preferences']
+            curr_pref = student["preferences"]
             if verbose:
-                print('\n----------')
-                print(i, student['name'])
-                print('Options:', curr_options)
-                print('DNA:', curr_dna)
-                print('DNA is in options:', dna_in_options)
-                print('Preferences:', curr_pref)
+                print("\n----------")
+                print(i, student["name"])
+                print("Options:", curr_options)
+                print("DNA:", curr_dna)
+                print("DNA is in options:", dna_in_options)
+                print("Preferences:", curr_pref)
 
             if flag_prio_prefs:
                 ## first choose a final_assignment based on
                 # 1. look at previous students in the current student's
                 # preferences.
-                prev_in_pref = [pref for pref in curr_pref if pref<i]
+                prev_in_pref = [pref for pref in curr_pref if pref < i]
                 if verbose:
-                    print('Previous students in preferences:', prev_in_pref)
+                    print("Previous students in preferences:", prev_in_pref)
                 df_pref = students.loc[prev_in_pref]
                 # now filter by those that have their final_assignment in
                 # curr_options
-                df_pref = df_pref[df_pref[
-                    'final_assignment'].isin(curr_options)]
-                if len(df_pref)>0:
+                df_pref = df_pref[df_pref["final_assignment"].isin(curr_options)]
+                if len(df_pref) > 0:
                     if verbose:
-                        print('Found valid previous students that are in'\
-                            'preferences')
+                        print("Found valid previous students that are in preferences")
                     # check if any have i in their preferences &
                     # not pref_satisfied
-                    msk_1 = df_pref['options'].apply(lambda x, val=i: val in x)
-                    msk_2 = df_pref['pref_satisfied'].apply(lambda x: x == 0)
+                    msk_1 = df_pref["options"].apply(lambda x, val=i: val in x)
+                    msk_2 = df_pref["pref_satisfied"].apply(lambda x: x == 0)
                     df_pref_prio = df_pref[msk_1 & msk_2]
-                    if not len(df_pref_prio)>0: # we found preferred previous
+                    if not len(df_pref_prio) > 0:  # we found preferred previous
                         # students, but not extra preferences satisfied:
                         df_pref_prio = df_pref
                 else:
                     if verbose:
-                        print('no valid previous students are found that are'\
-                              ' in the preferences.')
+                        print(
+                            "no valid previous students are found that are"
+                            " in the preferences."
+                        )
                     # so go check if any previous students have i in their
                     # preferences and not pref_satisfied
-                    df_pref = students.loc[:i-1]
-                    df_pref = df_pref[df_pref[
-                        'final_assignment'].isin(curr_options)]
+                    df_pref = students.loc[: i - 1]
+                    df_pref = df_pref[df_pref["final_assignment"].isin(curr_options)]
                     # check if any have i in their preferences
                     # & not pref_satisfied
-                    msk_1 = df_pref['preferences'].apply(lambda x, v=i: v in x)
-                    msk_2 = df_pref['pref_satisfied'].apply(lambda x: x == 0)
+                    msk_1 = df_pref["preferences"].apply(lambda x, v=i: v in x)
+                    msk_2 = df_pref["pref_satisfied"].apply(lambda x: x == 0)
                     df_pref_prio = df_pref[msk_1 & msk_2]
                     if len(df_pref_prio) > 0:
                         if verbose:
-                            print('But previous students have this student in'\
-                                ' their preferences and they do not have'\
-                                ' pref_satisfied')
+                            print(
+                                "But previous students have this student in"
+                                " their preferences and they do not have"
+                                " pref_satisfied"
+                            )
                     # if that is not the case, no preferences can be satisfied,
                     # and we should just pick a class based on options and dna.
 
                 # check again if there are any options left:
                 if len(df_pref_prio) > 0:
                     if verbose:
-                        print('df_pref_prio:',
-                              df_pref_prio[['name', 'final_assignment',
-                                            'pref_satisfied']])
+                        print(
+                            "df_pref_prio:",
+                            df_pref_prio[
+                                ["name", "final_assignment", "pref_satisfied"]
+                            ],
+                        )
                     # first see of any of them match with the dna, otherwise,
                     # pick the first one:
-                    if curr_dna in df_pref_prio['final_assignment'].values:
+                    if curr_dna in df_pref_prio["final_assignment"].values:
                         if verbose:
-                            print('Found DNA in previous preferred students')
+                            print("Found DNA in previous preferred students")
                         final_assignment = curr_dna
                     else:
                         if verbose:
-                            print('Did not find DNA in previous preferred'\
-                                  ' students so will take first one')
-                        final_assignment = df_pref_prio.iloc[0][
-                            'final_assignment']
+                            print(
+                                "Did not find DNA in previous preferred"
+                                " students so will take first one"
+                            )
+                        final_assignment = df_pref_prio.iloc[0]["final_assignment"]
                 else:
-                    #just pick DNA if it's in the options and if not, the next
+                    # just pick DNA if it's in the options and if not, the next
                     # item in options (go around)
-                    final_assignment = next_best(student['options'], curr_dna)
+                    final_assignment = next_best(student["options"], curr_dna)
             else:
                 if verbose:
-                    print("Ignoring preferences, just trying DNA if it's in"\
-                          " options")
-                #just pick DNA if it's in the options and if not, the next item
+                    print("Ignoring preferences, just trying DNA if it's in options")
+                # just pick DNA if it's in the options and if not, the next item
                 # in options (go around)
-                final_assignment = next_best(student['options'], curr_dna)
+                final_assignment = next_best(student["options"], curr_dna)
             # now the current student has a final_assignment.
             if verbose:
-                print('Final assignment:', final_assignment)
-            students.loc[i, 'final_assignment'] = int(final_assignment)
+                print("Final assignment:", final_assignment)
+            students.loc[i, "final_assignment"] = int(final_assignment)
             # verify if any of the previous students now have their
             # pref_satisfied.
             self.update_all_pref_sat(students.loc[:i])
 
             ## now update the options column of next students:
             # if current student has_not_tog:
-                # remove current_student[final_assignment] from those student's
-                # options
+            # remove current_student[final_assignment] from those student's
+            # options
             # if current student has_tog:
-                # only keep current_student[final_assignment] in those
-                # student's options.
+            # only keep current_student[final_assignment] in those
+            # student's options.
 
-            has_not_tog = len(student['not_together'])>0
+            has_not_tog = len(student["not_together"]) > 0
             if has_not_tog and verbose:
-                print('Not_together:', student['not_together'])
-            for not_tog in student['not_together']:
-                if final_assignment in students.loc[not_tog,'options']:
+                print("Not_together:", student["not_together"])
+            for not_tog in student["not_together"]:
+                if final_assignment in students.loc[not_tog, "options"]:
                     if verbose:
-                        print(f'removing option {final_assignment} from'\
-                            f' student {not_tog}:'\
-                            f' {students.loc[not_tog, "name"]}')
-                    students.loc[not_tog,'options'].remove(final_assignment)
-            has_tog = len(student['together'])>0
+                        print(
+                            f"removing option {final_assignment} from"
+                            f" student {not_tog}:"
+                            f' {students.loc[not_tog, "name"]}'
+                        )
+                    students.loc[not_tog, "options"].remove(final_assignment)
+            has_tog = len(student["together"]) > 0
             if has_tog and verbose:
-                print('together:', student['together'])
-            for tog in student['together']:
+                print("together:", student["together"])
+            for tog in student["together"]:
                 if verbose:
-                    print(f'setting options for student {tog}:'\
-                        f' {students.loc[tog, "name"]} to {final_assignment}')
-                students.loc[tog, 'options'] = [final_assignment]
+                    print(
+                        f"setting options for student {tog}:"
+                        f' {students.loc[tog, "name"]} to {final_assignment}'
+                    )
+                students.loc[tog, "options"] = [final_assignment]
 
     @staticmethod
     def update_class_to_improve_pref(df, i, verbose=False):
-        '''Go through the student's options to see if we can change its class
+        """Go through the student's options to see if we can change its class
         in order to improve its pref_satisfied to be >0.
-        '''
-        original_assignment = df.loc[i, 'final_assignment']
-        other_options = [j for j in df.loc[i, 'options']
-                         if not j==original_assignment]
-        for option in other_options + [original_assignment]: # if other options
+        """
+        original_assignment = df.loc[i, "final_assignment"]
+        other_options = [
+            j for j in df.loc[i, "options"] if not j == original_assignment
+        ]
+        for option in other_options + [original_assignment]:  # if other options
             # don't improve things, go back to original
             new_assignment = option
-            df.loc[i,'final_assignment'] = int(new_assignment)
+            df.loc[i, "final_assignment"] = int(new_assignment)
             Plan.update_pref_sat(df, i)
-            if df.loc[i, 'pref_satisfied'] > 1: # break loop as soon as it's ok
+            if df.loc[i, "pref_satisfied"] > 1:  # break loop as soon as it's ok
                 if verbose:
-                    print(f'Updating student {i}: {df.loc[i, "name"]} from'
-                          f' {original_assignment} to {new_assignment}')
-                    print('Now the pref_sat is: ', df.loc[i, 'pref_satisfied'])
+                    print(
+                        f'Updating student {i}: {df.loc[i, "name"]} from'
+                        f" {original_assignment} to {new_assignment}"
+                    )
+                    print("Now the pref_sat is: ", df.loc[i, "pref_satisfied"])
                 break
 
     @staticmethod
     def update_other_students_to_improve_pref(df, i, verbose=False):
-        '''Go through the student's preferences and see if you can change one
+        """Go through the student's preferences and see if you can change one
         of their classes in order to improve this student's pref_satisfied.
         The condition for making a change is that the total number of
         pref_satisfied>0 increases.
-        '''
-        count_pref_sat = sum(df['pref_satisfied']>0)
-        preferences = df.loc[i, 'preferences']
+        """
+        count_pref_sat = sum(df["pref_satisfied"] > 0)
+        preferences = df.loc[i, "preferences"]
         # can I change one of the prefered student's classes without making
         # their pref_satisfied 0?
         for k in preferences:
-            original_assignment = df.loc[k, 'final_assignment']
-            other_options = [j for j in df.loc[k, 'options']
-                             if not j==original_assignment]
-            for option in other_options + [original_assignment]: # if other
+            original_assignment = df.loc[k, "final_assignment"]
+            other_options = [
+                j for j in df.loc[k, "options"] if not j == original_assignment
+            ]
+            for option in other_options + [original_assignment]:  # if other
                 # options don't improve things, go back to original
                 new_assignment = option
-                df.loc[k,'final_assignment'] = int(new_assignment)
+                df.loc[k, "final_assignment"] = int(new_assignment)
                 Plan.update_all_pref_sat(df)
-                new_count_pref_sat = sum(df['pref_satisfied']>0)
+                new_count_pref_sat = sum(df["pref_satisfied"] > 0)
                 if new_count_pref_sat > count_pref_sat:
                     if verbose:
-                        print(f'Updating student {k}: {df.loc[k, "name"]}'\
-                            f' from {original_assignment} to {new_assignment}')
-                        print('The number of preferences satisfied went from'\
-                            f' {count_pref_sat} to {new_count_pref_sat}.')
+                        print(
+                            f'Updating student {k}: {df.loc[k, "name"]}'
+                            f" from {original_assignment} to {new_assignment}"
+                        )
+                        print(
+                            "The number of preferences satisfied went from"
+                            f" {count_pref_sat} to {new_count_pref_sat}."
+                        )
                     break
 
     def improve_preferences(self, max_tries=10, verbose=False):
-        '''Check the pref_satisfied of all the students. If not all of them are
+        """Check the pref_satisfied of all the students. If not all of them are
         >0, try to improve things by applying the methods
         update_class_to_improve_pref and update_other_students_to_improve_pref
         on each student with pref_satisfied == 0. Keep trying this across all
         students until all are >0 or for a maximum number of times.
-        '''
+        """
         all_pref_sat = False
         trying = 0
         students = self.students
-        count_pref_sat = sum(students['pref_satisfied']>0)
+        count_pref_sat = sum(students["pref_satisfied"] > 0)
         all_pref_sat = count_pref_sat == len(students)
         while (not all_pref_sat) and trying < max_tries:
             trying += 1
             if verbose:
-                print('Try:', trying)
+                print("Try:", trying)
             for i, row in students.iterrows():
-                if not row['pref_satisfied']:
+                if not row["pref_satisfied"]:
                     if verbose:
                         print(f'Working on {i}: {students.loc[i, "name"]}')
                     self.update_class_to_improve_pref(students, i, verbose)
                     self.update_all_pref_sat(students)
                     previous_count = count_pref_sat
-                    count_pref_sat = sum(students['pref_satisfied']>0)
+                    count_pref_sat = sum(students["pref_satisfied"] > 0)
                     all_pref_sat = count_pref_sat == len(students)
                     if verbose:
-                        print('Number of students with at least 1 preference'\
-                            ' satisfied = ', count_pref_sat)
+                        print(
+                            "Number of students with at least 1 preference"
+                            " satisfied = ",
+                            count_pref_sat,
+                        )
                     # if the count didn't go up, try swapping the student's
                     # prefered students.
                     if not count_pref_sat > previous_count:
                         if verbose:
                             print("Trying preferred students.")
-                        self.update_other_students_to_improve_pref(students, i,
-                                                                   verbose)
+                        self.update_other_students_to_improve_pref(students, i, verbose)
                     previous_count = count_pref_sat
-                    count_pref_sat = sum(students['pref_satisfied']>0)
+                    count_pref_sat = sum(students["pref_satisfied"] > 0)
                     all_pref_sat = count_pref_sat == len(students)
 
-    def check_assignment(self, raise_exception = False):
-        '''Check if all together and not_together as well as preferences are
+    def check_assignment(self, raise_exception=False):
+        """Check if all together and not_together as well as preferences are
         satisfied.
-        '''
+        """
         check = True
         # check that the not_together and together conditions are satisfied:
         for i, stu in self.students.iterrows():
-            for not_tog in stu['not_together']:
-                check = (self.students.loc[not_tog, 'final_assignment']
-                         != stu['final_assignment'])
+            for not_tog in stu["not_together"]:
+                check = (
+                    self.students.loc[not_tog, "final_assignment"]
+                    != stu["final_assignment"]
+                )
                 if not check:
                     if raise_exception:
-                        raise ValueError(f'Students {i} and {not_tog}'\
-                            ' are together and should not!')
+                        raise ValueError(
+                            f"Students {i} and {not_tog}"
+                            " are together and should not!"
+                        )
                     break
 
-            for tog in stu['together']:
-                check = (self.students.loc[tog, 'final_assignment']
-                         == stu['final_assignment'])
+            for tog in stu["together"]:
+                check = (
+                    self.students.loc[tog, "final_assignment"]
+                    == stu["final_assignment"]
+                )
                 if not check:
                     if raise_exception:
-                        raise ValueError(f'Students {i} and {tog} are not'\
-                            ' together and should be!')
+                        raise ValueError(
+                            f"Students {i} and {tog} are not" " together and should be!"
+                        )
                     break
 
         # check that the pref_satisfied is >0 for all students:
-        check = sum(self.students['pref_satisfied']>0) == len(self.students)
+        check = sum(self.students["pref_satisfied"] > 0) == len(self.students)
 
         return check
 
     @property
     def final_assignment(self):
-        '''After assignment algo, return assignments.'''
-        return self.students['final_assignment'].values
+        """After assignment algo, return assignments."""
+        return self.students["final_assignment"].values
 
     @property
     def assignment_check(self):
-        '''Returns self.check_assignment() as an attribute.'''
+        """Returns self.check_assignment() as an attribute."""
         return self.check_assignment()
 
     @property
     def classes(self):
-        '''Return the classes of the Plan, with all the students assigned to
+        """Return the classes of the Plan, with all the students assigned to
         them.
-        '''
-        class_list = list(range(int(max(self.final_assignment)+1)))
+        """
+        class_list = list(range(int(max(self.final_assignment) + 1)))
         classes = []
         for i in class_list:
-            classes.append(Klas(students=StudentGroup(
-                self.students[self.students['final_assignment'] == i])))
+            classes.append(
+                Klas(
+                    students=StudentGroup(
+                        self.students[self.students["final_assignment"] == i]
+                    )
+                )
+            )
         return classes
 
     def print_classes(self):
-        '''Print the name of each class and the students in it.'''
+        """Print the name of each class and the students in it."""
         for klas in self.classes:
-            print(f'Klas heet {klas.name} en bevat studenten:'\
-                f'{[name for name in klas.students["name"]]}')
+            print(
+                f"Klas heet {klas.name} en bevat studenten:"
+                f'{[name for name in klas.students["name"]]}'
+            )
 
     @property
     def min_class_size(self):
-        '''Returns the minimum size of the classes.'''
+        """Returns the minimum size of the classes."""
         return min(self.classes_size)
 
     @property
     def max_class_size(self):
-        '''Returns the maximum size of the classes.'''
+        """Returns the maximum size of the classes."""
         return max(self.classes_size)
 
     @property
     def summary(self):
-        '''Returns a dict with all the classes_prop and spread_prop.'''
+        """Returns a dict with all the classes_prop and spread_prop."""
         summary_dict = {}
         for prop in self.students.properties:
-            summary_dict['classes_' + prop] = getattr(self, 'classes_' + prop)
-            summary_dict['spread_' + prop] = getattr(self, 'spread_' + prop)
+            summary_dict["classes_" + prop] = getattr(self, "classes_" + prop)
+            summary_dict["spread_" + prop] = getattr(self, "spread_" + prop)
         return summary_dict
 
     def print_summary(self):
-        '''Print the summary.'''
+        """Print the summary."""
         for prop, val in self.summary.items():
-            if 'classes' in prop:
-                print('Mean', prop, 'per class:', val)
-            elif 'spread' in prop:
-                print('Spread of mean', prop, 'over classes:', val)
+            if "classes" in prop:
+                print("Mean", prop, "per class:", val)
+            elif "spread" in prop:
+                print("Spread of mean", prop, "over classes:", val)
 
 
 class PlanPopulation(Population):
-    '''Inherits from optime's Population but tailored for Plan.'''
+    """Inherits from optime's Population but tailored for Plan."""
+
     def __init__(self, students, n_pop, n_classes, goals_dict, conditions):
         plans = [Plan(students, n_classes) for _ in np.arange(n_pop)]
         Plan.dna = Plan.assignment
-        Plan.parent_props = ['students', 'n_classes']
+        Plan.parent_props = ["students", "n_classes"]
         super().__init__(plans, goals_dict, conditions)

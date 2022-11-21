@@ -7,7 +7,7 @@ import classevy as klas
 
 rng = np.random.default_rng()
 
-data_folder = 'data'
+DATA_FOLDER = 'data'
 
 class TestFunctions(unittest.TestCase):
     '''Unit tests for module-level functions.'''
@@ -25,12 +25,12 @@ class TestStudentGroup(unittest.TestCase):
     def test(self):
         '''Read a list of students from a csv file (try 3 construction methods)
         and test if the properties are constructed correctly.'''
-        df_students = klas.StudentGroup.read_csv(path.join(data_folder,
+        df_students = klas.StudentGroup.read_csv(path.join(DATA_FOLDER,
                                                            'students.csv'))
 
         # trigger errors:
         def load_error():
-            _ = klas.StudentGroup.read_csv(path.join(data_folder,
+            _ = klas.StudentGroup.read_csv(path.join(DATA_FOLDER,
                                                      'students_wrong.csv'))
         self.assertRaises(ValueError, load_error)
 
@@ -39,7 +39,7 @@ class TestStudentGroup(unittest.TestCase):
         self.assertIsInstance(students, klas.StudentGroup)
 
         # 2: start from string (path)
-        students = klas.StudentGroup(path.join(data_folder,'students.csv'))
+        students = klas.StudentGroup(path.join(DATA_FOLDER,'students.csv'))
         self.assertIsInstance(students, klas.StudentGroup)
         self.assertEqual(students.size, len(students))
 
@@ -59,7 +59,7 @@ class TestKlas(unittest.TestCase):
         '''Create a Klas with 2 known students so we can check calculation of
         some properties.
         '''
-        _ = klas.Klas(students=klas.StudentGroup(path.join(data_folder,
+        _ = klas.Klas(students=klas.StudentGroup(path.join(DATA_FOLDER,
                                                            'students.csv')))
 
 
@@ -68,7 +68,7 @@ class TestPlan(unittest.TestCase):
     def test_auto_assign(self):
         '''Test if the auto-assignment works.'''
         for n_classes in range(2,5):
-            students = klas.StudentGroup(path.join(data_folder,
+            students = klas.StudentGroup(path.join(DATA_FOLDER,
                                                    'students.csv'))
             p_1 = klas.Plan(students,
                         n_classes,
@@ -113,7 +113,7 @@ class TestPlan(unittest.TestCase):
                          'students_short.csv',
                          'students_short_hard.csv',
                          'students_short_impossible.csv']:
-            students = klas.StudentGroup(path.join(data_folder, stu_file))
+            students = klas.StudentGroup(path.join(DATA_FOLDER, stu_file))
             p_1 = klas.Plan(students,
                         2,
                         assignment=None
@@ -130,7 +130,7 @@ class TestPlanPopulation(unittest.TestCase):
     '''Tests for PlanPopulation class.'''
     def test(self):
         '''General test'''
-        students = klas.StudentGroup(path.join(data_folder,
+        students = klas.StudentGroup(path.join(DATA_FOLDER,
                                                    'students.csv'))
         goals_dict = {f'spread_{prop}':'min' for prop in students.properties}
         pop = klas.PlanPopulation(students,20, 2, goals_dict=goals_dict,

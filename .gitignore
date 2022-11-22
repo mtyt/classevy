@@ -147,4 +147,4 @@ dmypy.json
 .vscode/
 
 # Jupyter Notebooks
-*.ipynb
+#*.ipynb

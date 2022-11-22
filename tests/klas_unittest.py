@@ -3,7 +3,7 @@ import unittest
 from os import path
 import numpy as np
 import pandas as pd
-import classevy as klas
+from classevy import klas
 
 rng = np.random.default_rng()
 

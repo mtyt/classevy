@@ -5,9 +5,8 @@ import ast
 from typing import Optional
 from copy import deepcopy
 import numpy as np
-from numpy.typing import ArrayLike
 import pandas as pd
-from optime import Population
+from optime.ga import Population
 
 
 rng = np.random.default_rng()
@@ -73,7 +72,7 @@ class StudentGroup(pd.DataFrame):
             for col in ["not_together", "together"]:
                 for other in row[col]:
                     other_student = df.loc[other]
-                    if not number in other_student[col]:
+                    if number not in other_student[col]:
                         raise ValueError(
                             f"Student with number {number} is"
                             f" not in Student with number {other} {col} list"
@@ -302,7 +301,7 @@ class Plan:
 
             final_assignment: int
             if flag_prio_prefs:
-                ## first choose a final_assignment based on
+                # first choose a final_assignment based on
                 # 1. look at previous students in the current student's
                 # preferences.
                 prev_in_pref: list[int] = [pref for pref in curr_pref if pref < i]
@@ -388,7 +387,7 @@ class Plan:
             # pref_satisfied.
             self.update_all_pref_sat(students.loc[:i])
 
-            ## now update the options column of next students:
+            # now update the options column of next students:
             # if current student has_not_tog:
             # remove current_student[final_assignment] from those student's
             # options
@@ -591,12 +590,12 @@ class Plan:
     @property
     def min_class_size(self) -> int:
         """Returns the minimum size of the classes."""
-        return min(self.classes_size)
+        return min(self.classes_size)  # type: ignore[attr-defined]
 
     @property
     def max_class_size(self) -> int:
         """Returns the maximum size of the classes."""
-        return max(self.classes_size)
+        return max(self.classes_size)  # type: ignore[attr-defined]
 
     @property
     def summary(self) -> dict:

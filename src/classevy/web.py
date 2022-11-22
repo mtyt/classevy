@@ -12,7 +12,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import pandas as pd
-from classevy import StudentGroup, Klas, Plan
+from classevy.klas import StudentGroup, Klas, Plan
 
 
 UPLOAD_FOLDER = "data"

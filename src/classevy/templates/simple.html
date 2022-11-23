@@ -5,8 +5,11 @@
     <title>Title</title>
 </head>
 <body>
-<form action="{{page}}">
+<form action="{{page_restart}}">
     <input type="submit" value="Restart" />
+</form>
+<form action="{{page_run}}">
+    <input type="submit" value="Run!" />
 </form>
 {% for table in tables %}
             {{titles[loop.index]}}

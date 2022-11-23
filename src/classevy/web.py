@@ -6,13 +6,11 @@ from flask import (
     flash,
     request,
     redirect,
-    url_for,
     send_from_directory,
     render_template,
 )
 from werkzeug.utils import secure_filename
-import pandas as pd
-from classevy.klas import StudentGroup, Klas, Plan
+from classevy.klas import StudentGroup, PlanPopulation
 
 
 UPLOAD_FOLDER = "data"
@@ -53,11 +51,38 @@ def upload_file():
                 "simple.html",
                 tables=[df.to_html(classes="data")],
                 titles=df.columns.values,
+                page_restart="/",
+                page_run="/run"
             )
 
+    return render_template("forms.html", page_restart=request.url)
+
+
+@app.route("/run")
+def run_algo():
+    filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
+    students = StudentGroup(filename)
+    pop = PlanPopulation(
+        students,
+        20,
+        2,
+        goals_dict={
+            "spread_gender": "min",
+            "spread_score_math": "min",
+            "spread_score_spelling": "min",
+            "spread_size": "min",
+        },
+        conditions=["assignment_check"],
+    )
+    pop.run()
+    front = pop.pareto()
+    front["sum"] = sum([front[col] for col in pop.goals_names])
+    best_plan = front.sort_values('sum').iloc[0].values[0]
+    df = best_plan.students
     return render_template(
-        "forms.html",
-        page=request.url
+        "simple.html",
+        tables=[df.to_html(classes="data")],
+        titles=df.columns.values,
     )
 
 

@@ -259,12 +259,13 @@ class Plan:
     @staticmethod
     def update_pref_sat(df: pd.DataFrame, i: int) -> None:
         """Update the pref_satistfied column for student with number i"""
-        pref_sat: int = 0
-        for pref in df.loc[i, "preferences"]:
-            if pref in df.index:
-                if df.loc[pref, "final_assignment"] == df.loc[i, "final_assignment"]:
-                    pref_sat += 1
-        df.loc[i, "pref_satisfied"] = pref_sat
+        curr_finass = df.loc[i, "final_assignment"]
+        curr_pref = list(df.loc[i, "preferences"])
+        # limit the preferences to check to those in df.index:
+        curr_pref = [pref for pref in curr_pref if pref in df.index]
+        df.loc[i, "pref_satisfied"] = sum(
+            df.loc[curr_pref, "final_assignment"] == curr_finass
+        )
 
     @staticmethod
     def update_all_pref_sat(df: pd.DataFrame) -> None:

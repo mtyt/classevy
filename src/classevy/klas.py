@@ -624,9 +624,18 @@ class PlanPopulation(Population):
         students: StudentGroup,
         n_pop: int,
         n_classes: int,
-        goals_dict: dict,
-        conditions: list,
+        goals_dict: Optional[dict] = None,
+        conditions: Optional[list] = None,
     ):
+        if not isinstance(students, StudentGroup):
+            raise TypeError("students should be a StudentGroup")
+        # set population.students so it can be used to obtain the goals_dict
+        self.students = students
+        if goals_dict is None:
+            goals_dict = self.default_goals_dict
+        if conditions is None:
+            conditions = ['assignment_check']
+
         class PlanGA(Plan):
             def __init__(self, *args, **kwargs) -> None:
                 super().__init__(*args, **kwargs)
@@ -636,3 +645,8 @@ class PlanPopulation(Population):
 
         plans = [PlanGA(students, n_classes) for _ in np.arange(n_pop)]
         super().__init__(plans, goals_dict, conditions)
+
+    @property
+    def default_goals_dict(self):
+        # take all the spread_prop of all prop in students.properties, target = 'min'
+        return {'spread_' + prop: 'min' for prop in self.students.properties}

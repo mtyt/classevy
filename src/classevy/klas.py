@@ -548,8 +548,9 @@ class Plan:
                         )
                     break
 
-        # check that the pref_satisfied is >0 for all students:
-        check = sum(self.students["pref_satisfied"] > 0) == len(self.students)
+        # check that the pref_satisfied is >0 for all students that have preferences:
+        pref_mask = self.students["preferences"].apply(lambda x: len(x) > 0)
+        check = sum(self.students["pref_satisfied"] > 0) == len(self.students.loc[pref_mask])
 
         return check
 
@@ -649,4 +650,7 @@ class PlanPopulation(Population):
     @property
     def default_goals_dict(self):
         # take all the spread_prop of all prop in students.properties, target = 'min'
-        return {'spread_' + prop: 'min' for prop in self.students.properties}
+        # and also size!
+        default_goals = {'spread_' + prop: 'min' for prop in self.students.properties}
+        default_goals['spread_size'] = 'min'
+        return default_goals

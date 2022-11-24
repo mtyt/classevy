@@ -79,21 +79,24 @@ class StudentGroup(pd.DataFrame):
                             f" but {other} is in {number}"
                         )
 
-        # the preferences should be tuples with 0 to 3 numbers and not contain
+        # the preferences should be tuples with 0 or 3 numbers and not contain
         # the student's own
-        for _, row in df.iterrows():
+        for i, row in df.iterrows():
             tup = row["preferences"]
             if not isinstance(tup, tuple):
                 raise TypeError(
                     f"Expected a tuple but got {type(tup)}. Is"
                     " the 'preferences' column correctly formatted?"
                 )
-            if not len(tup) < 4:
+            if not ((len(tup) == 3) or (len(tup) == 0)):
                 raise ValueError(
-                    "The 'preferences' should contain max 3"
+                    "The 'preferences' should contain 3"
                     f" values but has {len(tup)} for student with number"
-                    f"{row['number']}."
+                    f"{i}."
                 )
+            if len(tup) == 0:
+                # set the value to the student number so it's always satisfied.
+                df.loc[i, "preferences"] = (i,)
 
         # All numbers in not_together, together and preferences columns should
         # be inside the student numbers.
@@ -259,21 +262,23 @@ class Plan:
     @staticmethod
     def update_pref_sat(df: pd.DataFrame, i: int) -> None:
         """Update the pref_satistfied column for student with number i"""
-        curr_finass = df.loc[i, "final_assignment"]
-        curr_pref = list(df.loc[i, "preferences"])
+        curr_finass = df.at[i, "final_assignment"]
+        curr_pref = list(df.at[i, "preferences"])
         # limit the preferences to check to those in df.index:
         curr_pref = [pref for pref in curr_pref if pref in df.index]
-        df.loc[i, "pref_satisfied"] = sum(
-            df.loc[curr_pref, "final_assignment"] == curr_finass
-        )
+        pref_sat = 0
+        for pref in curr_pref:
+            if df.at[pref, "final_assignment"] == curr_finass:
+                pref_sat += 1
+        df.at[i, "pref_satisfied"] = pref_sat
 
     @staticmethod
     def update_all_pref_sat(df: pd.DataFrame) -> None:
         """Update the pref_satisfied column for all students."""
-        for i, _ in df.iterrows():
+        for i in df.index.values:
             Plan.update_pref_sat(df, i)
 
-    def do_assignment(self, flag_prio_prefs: bool = True, verbose: bool = False):
+    def do_assignment(self, flag_prio_prefs: bool = False, verbose: bool = False):
         """Based on:
             - self.assignment (DNA)
             - student's preferences
@@ -286,7 +291,7 @@ class Plan:
         # script flags:
         # flag_prio_prefs: prioritize preferences over DNA
         students = self.students
-        for i, _ in students.iterrows():
+        for i in students.index.values:
             student: pd.Series = students.loc[i]
             curr_options: list[int] = student["options"]
             curr_dna: int = student["dna_assignment"]
@@ -383,7 +388,7 @@ class Plan:
             # now the current student has a final_assignment.
             if verbose:
                 print("Final assignment:", final_assignment)
-            students.loc[i, "final_assignment"] = int(final_assignment)
+            students.at[i, "final_assignment"] = int(final_assignment)
             # verify if any of the previous students now have their
             # pref_satisfied.
             self.update_all_pref_sat(students.loc[:i])
@@ -400,14 +405,14 @@ class Plan:
             if has_not_tog and verbose:
                 print("Not_together:", student["not_together"])
             for not_tog in student["not_together"]:
-                if final_assignment in students.loc[not_tog, "options"]:
+                if final_assignment in students.at[not_tog, "options"]:
                     if verbose:
                         print(
                             f"removing option {final_assignment} from"
                             f" student {not_tog}:"
-                            f' {students.loc[not_tog, "name"]}'
+                            f' {students.at[not_tog, "name"]}'
                         )
-                    students.loc[not_tog, "options"].remove(final_assignment)
+                    students.at[not_tog, "options"].remove(final_assignment)
             has_tog = len(student["together"]) > 0
             if has_tog and verbose:
                 print("together:", student["together"])
@@ -415,31 +420,31 @@ class Plan:
                 if verbose:
                     print(
                         f"setting options for student {tog}:"
-                        f' {students.loc[tog, "name"]} to {final_assignment}'
+                        f' {students.at[tog, "name"]} to {final_assignment}'
                     )
-                students.loc[tog, "options"] = [final_assignment]
+                students.at[tog, "options"] = [final_assignment]
 
     @staticmethod
     def update_class_to_improve_pref(df: pd.DataFrame, i: int, verbose=False):
         """Go through the student's options to see if we can change its class
         in order to improve its pref_satisfied to be >0.
         """
-        original_assignment: int = df.loc[i, "final_assignment"]
+        original_assignment: int = df.at[i, "final_assignment"]
         other_options: list[int] = [
-            j for j in df.loc[i, "options"] if not j == original_assignment
+            j for j in df.at[i, "options"] if not j == original_assignment
         ]
         for option in other_options + [original_assignment]:  # if other options
             # don't improve things, go back to original
             new_assignment: int = option
-            df.loc[i, "final_assignment"] = int(new_assignment)
+            df.at[i, "final_assignment"] = int(new_assignment)
             Plan.update_pref_sat(df, i)
-            if df.loc[i, "pref_satisfied"] > 1:  # break loop as soon as it's ok
+            if df.at[i, "pref_satisfied"] > 1:  # break loop as soon as it's ok
                 if verbose:
                     print(
-                        f'Updating student {i}: {df.loc[i, "name"]} from'
+                        f'Updating student {i}: {df.at[i, "name"]} from'
                         f" {original_assignment} to {new_assignment}"
                     )
-                    print("Now the pref_sat is: ", df.loc[i, "pref_satisfied"])
+                    print("Now the pref_sat is: ", df.at[i, "pref_satisfied"])
                 break
 
     @staticmethod
@@ -450,24 +455,24 @@ class Plan:
         pref_satisfied>0 increases.
         """
         count_pref_sat: int = sum(df["pref_satisfied"] > 0)
-        preferences: tuple[int] = df.loc[i, "preferences"]
+        preferences: tuple[int] = df.at[i, "preferences"]
         # can I change one of the prefered student's classes without making
         # their pref_satisfied 0?
         for k in preferences:
-            original_assignment: int = df.loc[k, "final_assignment"]
+            original_assignment: int = df.at[k, "final_assignment"]
             other_options: list[int] = [
-                j for j in df.loc[k, "options"] if not j == original_assignment
+                j for j in df.at[k, "options"] if not j == original_assignment
             ]
             for option in other_options + [original_assignment]:  # if other
                 # options don't improve things, go back to original
                 new_assignment: int = option
-                df.loc[k, "final_assignment"] = int(new_assignment)
+                df.at[k, "final_assignment"] = int(new_assignment)
                 Plan.update_all_pref_sat(df)
                 new_count_pref_sat: int = sum(df["pref_satisfied"] > 0)
                 if new_count_pref_sat > count_pref_sat:
                     if verbose:
                         print(
-                            f'Updating student {k}: {df.loc[k, "name"]}'
+                            f'Updating student {k}: {df.at[k, "name"]}'
                             f" from {original_assignment} to {new_assignment}"
                         )
                         print(
@@ -491,10 +496,10 @@ class Plan:
             trying += 1
             if verbose:
                 print("Try:", trying)
-            for i, row in students.iterrows():
-                if not row["pref_satisfied"]:
+            for i in students.index.values:
+                if not students.at[i, "pref_satisfied"]:
                     if verbose:
-                        print(f'Working on {i}: {students.loc[i, "name"]}')
+                        print(f'Working on {i}: {students.at[i, "name"]}')
                     self.update_class_to_improve_pref(students, i, verbose)
                     self.update_all_pref_sat(students)
                     previous_count: int = count_pref_sat
@@ -525,7 +530,7 @@ class Plan:
         for i, stu in self.students.iterrows():
             for not_tog in stu["not_together"]:
                 check = (
-                    self.students.loc[not_tog, "final_assignment"]
+                    self.students.at[not_tog, "final_assignment"]
                     != stu["final_assignment"]
                 )
                 if not check:
@@ -538,7 +543,7 @@ class Plan:
 
             for tog in stu["together"]:
                 check = (
-                    self.students.loc[tog, "final_assignment"]
+                    self.students.at[tog, "final_assignment"]
                     == stu["final_assignment"]
                 )
                 if not check:
@@ -550,7 +555,9 @@ class Plan:
 
         # check that the pref_satisfied is >0 for all students that have preferences:
         pref_mask = self.students["preferences"].apply(lambda x: len(x) > 0)
-        check = sum(self.students["pref_satisfied"] > 0) == len(self.students.loc[pref_mask])
+        check = sum(self.students["pref_satisfied"] > 0) == len(
+            self.students.loc[pref_mask]
+        )
 
         return check
 
@@ -635,7 +642,7 @@ class PlanPopulation(Population):
         if goals_dict is None:
             goals_dict = self.default_goals_dict
         if conditions is None:
-            conditions = ['assignment_check']
+            conditions = ["assignment_check"]
 
         class PlanGA(Plan):
             def __init__(self, *args, **kwargs) -> None:
@@ -651,6 +658,6 @@ class PlanPopulation(Population):
     def default_goals_dict(self):
         # take all the spread_prop of all prop in students.properties, target = 'min'
         # and also size!
-        default_goals = {'spread_' + prop: 'min' for prop in self.students.properties}
-        default_goals['spread_size'] = 'min'
+        default_goals = {"spread_" + prop: "min" for prop in self.students.properties}
+        default_goals["spread_size"] = "min"
         return default_goals

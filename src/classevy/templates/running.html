@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+<script>
+    function navigate() {
+        window.location.href = 'done';  // Redirects user to the /map route when 'run' is finished
+    }
+    fetch('run').then(navigate)
+</script>
+</head>
+<body>
+    <div class="loader"></div>
+    Running Algorithm
+</body>
+</html>

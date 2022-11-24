@@ -46,24 +46,30 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             # return redirect(url_for('download_file', name=filename))
-            df = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            global STUDENTS
+            STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             return render_template(
                 "simple.html",
-                tables=[df.to_html(classes="data")],
-                titles=df.columns.values,
+                tables=[STUDENTS.to_html(classes="data")],
+                titles=STUDENTS.columns.values,
                 page_restart="/",
-                page_run="/run"
+                page_run="/start",
             )
 
     return render_template("forms.html", page_restart=request.url)
 
 
+@app.route("/start")
+def start():
+    return render_template("running.html")
+
+
 @app.route("/run")
 def run_algo():
-    filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
-    students = StudentGroup(filename)
+    # filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
+    # students = StudentGroup(filename)
     pop = PlanPopulation(
-        students,
+        STUDENTS,
         20,
         2,
         goals_dict={
@@ -74,15 +80,22 @@ def run_algo():
         },
         conditions=["assignment_check"],
     )
-    pop.run()
+    pop.run(n_gen=2, verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
-    best_plan = front.sort_values('sum').iloc[0].values[0]
-    df = best_plan.students
+    best_plan = front.sort_values("sum").iloc[0].values[0]
+    global BEST_PLAN
+    BEST_PLAN = best_plan.students
+    return "Done"
+
+
+@app.route("/done")
+def present_result():
     return render_template(
         "simple.html",
-        tables=[df.to_html(classes="data")],
-        titles=df.columns.values,
+        tables=[BEST_PLAN.to_html(classes="data")],
+        titles=BEST_PLAN.columns.values,
+        page_restart="/",
     )
 
 

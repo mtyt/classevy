@@ -2,6 +2,7 @@
 to classes."""
 from functools import partial
 import ast
+import os
 from typing import Optional
 from copy import deepcopy
 import numpy as np
@@ -28,7 +29,6 @@ class StudentGroup(pd.DataFrame):
     we add students after init.
     TODO: I think we should get rid of the Student class altogether and
     Studentgroup should just be a DataFrame."""
-
 
     @classmethod
     def read_csv(cls, path: str) -> pd.DataFrame:
@@ -112,8 +112,12 @@ class StudentGroup(pd.DataFrame):
         return df
 
     def __init__(self, data: Optional[pd.DataFrame | str]) -> None:
-        required_columns: list[str] = ["name", "together", "not_together",
-                                       "preferences"]
+        required_columns: list[str] = [
+            "name",
+            "together",
+            "not_together",
+            "preferences",
+        ]
         all_columns = ["number"] + required_columns
         if data is None:
             data = pd.DataFrame(columns=all_columns)
@@ -152,7 +156,7 @@ class Klas:
     ) -> None:
         self.name = name
         if students is None:
-            students = StudentGroup()
+            students = StudentGroup(None)
         elif isinstance(students, str):
             students = StudentGroup(students)
         elif isinstance(students, StudentGroup):
@@ -256,12 +260,16 @@ class Plan:
         self.students["final_assignment"] = np.zeros(len(self.students))
         self.students["pref_satisfied"] = np.zeros(len(self.students))
         # add these here so they don't show up in students.properties:
-        self.students.required_columns = self.students.required_columns + [col for col in [
-            "options",
-            "dna_assignment",
-            "final_assignment",
-            "pref_satisfied",
-        ] if col not in self.students.required_columns]
+        self.students.required_columns = self.students.required_columns + [
+            col
+            for col in [
+                "options",
+                "dna_assignment",
+                "final_assignment",
+                "pref_satisfied",
+            ]
+            if col not in self.students.required_columns
+        ]
 
     @staticmethod
     def update_pref_sat(df: pd.DataFrame, i: int) -> None:
@@ -547,8 +555,7 @@ class Plan:
 
             for tog in stu["together"]:
                 check = (
-                    self.students.at[tog, "final_assignment"]
-                    == stu["final_assignment"]
+                    self.students.at[tog, "final_assignment"] == stu["final_assignment"]
                 )
                 if not check:
                     if raise_exception:
@@ -584,13 +591,12 @@ class Plan:
         classes: list = []
         for i in class_list:
             students = StudentGroup(
-                        self.students[self.students["final_assignment"] == i])
-            students.required_columns = self.students.required_columns  # to fix properties
-            classes.append(
-                Klas(name=f"Class_{i}",
-                     students=students
-                     )
+                self.students[self.students["final_assignment"] == i]
             )
+            students.required_columns = (
+                self.students.required_columns
+            )  # to fix properties
+            classes.append(Klas(name=f"Class_{i}", students=students))
         return classes
 
     def print_classes(self) -> None:
@@ -627,6 +633,41 @@ class Plan:
                 print("Mean", prop, "per class:", val)
             elif "spread" in prop:
                 print("Spread of mean", prop, "over classes:", val)
+
+    def write_excel(self, filename):
+        """Write the plan to an Excel file. First page contains all students, next
+        pages show each class + average values for properties."""
+        plan_output = self.students.drop(columns=["options", "dna_assignment"])
+        klasses_output = [
+            k.students.drop(columns=["options", "dna_assignment", "final_assignment"])
+            for k in self.classes
+        ]
+        if os.path.exists(filename):
+            os.remove(filename)
+        with pd.ExcelWriter(filename, engine="openpyxl") as writer:
+            plan_output.to_excel(writer, sheet_name="All Students")
+            for i, stu in enumerate(klasses_output):
+                stu.to_excel(writer, sheet_name=f"Klas {self.classes[i].name}")
+
+        df_means_list = []
+        for stu in klasses_output:
+            df_means = pd.DataFrame(columns=stu.columns, index=["Average"])
+            for col in self.classes[0].students.properties:
+                mean = stu[col].mean()
+                df_means.iloc[0][col] = mean
+            df_means_list.append(df_means)
+
+        startrow = max([len(stu) for stu in klasses_output]) + 2
+        with pd.ExcelWriter(
+            filename, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+        ) as writer:
+            for i, klas in enumerate(self.classes):
+                df_means_list[i].to_excel(
+                    writer,
+                    sheet_name=f"Klas {klas.name}",
+                    startrow=startrow,
+                    header=False,
+                )
 
 
 class PlanPopulation(Population):

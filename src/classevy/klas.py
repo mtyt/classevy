@@ -29,7 +29,6 @@ class StudentGroup(pd.DataFrame):
     TODO: I think we should get rid of the Student class altogether and
     Studentgroup should just be a DataFrame."""
 
-    required_columns: list[str] = ["name", "together", "not_together", "preferences"]
 
     @classmethod
     def read_csv(cls, path: str) -> pd.DataFrame:
@@ -112,7 +111,12 @@ class StudentGroup(pd.DataFrame):
                         )
         return df
 
-    def __init__(self, data: pd.DataFrame | str) -> None:
+    def __init__(self, data: Optional[pd.DataFrame | str]) -> None:
+        required_columns: list[str] = ["name", "together", "not_together",
+                                       "preferences"]
+        all_columns = ["number"] + required_columns
+        if data is None:
+            data = pd.DataFrame(columns=all_columns)
         if isinstance(data, pd.DataFrame):
             super().__init__(data)
         elif isinstance(data, str):
@@ -122,6 +126,7 @@ class StudentGroup(pd.DataFrame):
             raise TypeError(
                 "Input to StudentGroup should be DataFrame or str (path to CSV file"
             )
+        self.required_columns = required_columns
 
     @property
     def size(self) -> int:
@@ -147,18 +152,17 @@ class Klas:
     ) -> None:
         self.name = name
         if students is None:
-            students = StudentGroup(
-                pd.DataFrame(columns=["number"] + StudentGroup.required_columns)
-            )
+            students = StudentGroup()
         elif isinstance(students, str):
             students = StudentGroup(students)
+        elif isinstance(students, StudentGroup):
+            pass  # just pre-empt next elif
         elif isinstance(students, pd.DataFrame):
             students = StudentGroup(students)
         else:
-            if not isinstance(students, StudentGroup):
-                raise TypeError(
-                    "students argument must be StudentGroup, None, str or DataFrame"
-                )
+            raise TypeError(
+                "students argument must be StudentGroup, None, str or DataFrame"
+            )
         self.students = students
         if conditions is None:
             conditions = []
@@ -252,12 +256,12 @@ class Plan:
         self.students["final_assignment"] = np.zeros(len(self.students))
         self.students["pref_satisfied"] = np.zeros(len(self.students))
         # add these here so they don't show up in students.properties:
-        self.students.required_columns = self.students.required_columns + [
+        self.students.required_columns = self.students.required_columns + [col for col in [
             "options",
             "dna_assignment",
             "final_assignment",
             "pref_satisfied",
-        ]
+        ] if col not in self.students.required_columns]
 
     @staticmethod
     def update_pref_sat(df: pd.DataFrame, i: int) -> None:
@@ -579,12 +583,13 @@ class Plan:
         class_list: list = list(range(int(max(self.final_assignment) + 1)))
         classes: list = []
         for i in class_list:
+            students = StudentGroup(
+                        self.students[self.students["final_assignment"] == i])
+            students.required_columns = self.students.required_columns  # to fix properties
             classes.append(
-                Klas(
-                    students=StudentGroup(
-                        self.students[self.students["final_assignment"] == i]
-                    )
-                )
+                Klas(name=f"Class_{i}",
+                     students=students
+                     )
             )
         return classes
 

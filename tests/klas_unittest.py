@@ -108,6 +108,10 @@ class TestPlan(unittest.TestCase):
 
             _ = p_1.summary
             p_1.print_summary()
+            
+            # classes should have not 'options' in their students.properties
+            for k in p_1.classes:
+                self.assertTrue('options' not in k.students.properties)
 
     def test_do_assignment_improve(self):
         """Some more tests for functions in class with different conditions."""
@@ -132,6 +136,8 @@ class TestPlan(unittest.TestCase):
         students = klas.StudentGroup(path.join(DATA_FOLDER, "students_no_cond.csv"))
         p_1 = klas.Plan(students, 2)
         self.assertTrue(p_1.assignment_check)
+        all_pref_are_self = all([stu['preferences'] == (i,) for i, stu in students.iterrows()])
+        self.assertTrue(all_pref_are_self)
 
 
 class TestPlanPopulation(unittest.TestCase):

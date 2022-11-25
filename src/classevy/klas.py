@@ -8,19 +8,10 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from optime.ga import Population
+from .helpers import next_best, divide_list, Numeric
 
 
 rng = np.random.default_rng()
-
-
-# some general functions
-def next_best(options: list[int], choice: int) -> int:
-    """find the option that equals choice, or the next item or if there is no
-    next item, the first item
-    """
-    checks = [op >= choice for op in options]
-    idx = np.argmax(np.array(checks))
-    return options[idx]
 
 
 class StudentGroup(pd.DataFrame):
@@ -620,6 +611,23 @@ class Plan:
     def max_class_size(self) -> int:
         """Returns the maximum size of the classes."""
         return max(self.classes_size)  # type: ignore[attr-defined]
+
+    def divide_one_prop(self, prop: str) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
+        """Perform a so-called Partition problem algorithm on the property 'prop' of
+        the plan. Assign each number in the descending-ordered list of the property to
+        the class for which the spread would increase the least. This is regardless of
+        all the other properties: what is the best spread we could obtain for this prop.
+        The method returns the classes (lists of the prop), the mean for each class,
+        and the standard deviation of those means across the classes.
+
+        Args:
+            prop: Represents the property to be divided over classes
+
+        Returns:
+            classes, means, spread
+        """
+
+        return divide_list(list(self.students[prop].values), self.n_classes)
 
     @property
     def summary(self) -> dict:

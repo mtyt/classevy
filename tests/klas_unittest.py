@@ -10,19 +10,6 @@ rng = np.random.default_rng()
 DATA_FOLDER = "data"
 
 
-class TestFunctions(unittest.TestCase):
-    """Unit tests for module-level functions."""
-
-    def test_next_best(self):
-        """Test the next_best function."""
-        options = [0, 1, 2, 4]
-        self.assertEqual(klas.next_best(options, 0), 0)
-        self.assertEqual(klas.next_best(options, 1), 1)
-        self.assertEqual(klas.next_best(options, 2), 2)
-        self.assertEqual(klas.next_best(options, 3), 4)
-        self.assertEqual(klas.next_best(options, 5), 0)
-
-
 class TestStudentGroup(unittest.TestCase):
     """Unit tests for StudentGroup class"""
 

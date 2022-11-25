@@ -89,32 +89,25 @@ def divide_list(
     num_list: list[Numeric], n_sets: int
 ) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
     sets: list = [[] for _ in range(n_sets)]
+    """Divide a list of numbers into a number of sets trying to minimize the spread
+    over the mean values of each set.
+
+    Args:
+        num_list: numbers to divide
+        n_sets: number of sets over which to divide
+
+    Returns:
+        sets: the numbers divided into sets
+        means: the mean of each set
+        spread: the spread of the means of sets
+    """
     for i in range(len(num_list)):
-
-        # first add the biggest impact numbers to the first available empty class
-        # note that this might mess up the standard deviation for small lists.
-        if any([len(c) == 0 for c in sets]) and False:
-            for c in sets:
-                if len(c) == 0:
-                    # num = pop_absmax(num_list)
-                    # print('num:', num)
-                    num = biggest_impact(num_list, sets)
-                    c.append(num)
-                    break
-
-        else:
-            # print('means', [np.array(c).mean() for c in sets])
-
-            # pick the number with the highest potential impact:
-            num = biggest_impact(num_list, sets)
-            # print('num:', num)
-            # print('hypo new means', [np.array(c+[num]).mean() for c in sets])
-            mean_stds = hypo_spread(num, sets)
-            # now add the num to the class that results in the smallest std:
-            # print('mean_stds:', mean_stds)
-            index = np.argmin(np.array(mean_stds))
-            # print('picking', index)
-            sets[index].append(num)
+        # pick the number with the highest potential impact:
+        num = biggest_impact(num_list, sets)
+        mean_stds = hypo_spread(num, sets)
+        # now add the num to the class that results in the smallest std:
+        index = np.argmin(np.array(mean_stds))
+        sets[index].append(num)
     means = [np.array(c).mean() if len(c) else 0 for c in sets]
     spread = np.array(means).std()
     return sets, means, spread

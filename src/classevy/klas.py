@@ -30,6 +30,10 @@ class StudentGroup(pd.DataFrame):
     TODO: I think we should get rid of the Student class altogether and
     Studentgroup should just be a DataFrame."""
 
+    _metadata = [
+        "required_columns"
+    ]  # avoid UserWarning: Pandas doesn't allow columns to be created via a new attribute name
+
     @classmethod
     def read_csv(cls, path: str) -> pd.DataFrame:
         """Correctly parse the CSV file and return a dataframe."""

@@ -4,7 +4,10 @@ debug_plan.py
 test_assignment_algo.ipynb
 criteria.txt
 data/students_evy.csv
+
+# profiling
 profiled*
+*.lprof
 
 # debug folder:
 debug/

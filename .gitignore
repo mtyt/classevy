@@ -4,6 +4,7 @@ debug_plan.py
 test_assignment_algo.ipynb
 criteria.txt
 data/students_evy.csv
+data/students_evy_no_cond.csv
 
 # profiling
 profiled*

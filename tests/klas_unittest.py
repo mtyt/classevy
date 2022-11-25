@@ -48,7 +48,7 @@ class TestStudentGroup(unittest.TestCase):
 
         # 4: force error:
         def yield_error():
-            _ = klas.StudentGroup(None)
+            _ = klas.StudentGroup(0)
 
         self.assertRaises(TypeError, yield_error)
 

@@ -1,0 +1,9 @@
+table {
+    border-collapse: collapse;
+    text-align: center;
+    }
+th, td {
+    border-bottom: 1px solid #ddd;
+    }
+tr:hover {background-color: coral;}
+tr:nth-child(even) {background-color: #f2f2f2;}

@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='mystyle.css') }}">
 </head>
 <body>
 <form action="{{page_restart}}">
     <input type="submit" value="Restart" />
 </form>
-<form action="{{page_run}}">
-    <input type="submit" value="Run!" />
+<form action="{{page_read}}">
+    <input type="submit" value="Read" />
 </form>
 {% for table in tables %}
             {{titles[loop.index]}}

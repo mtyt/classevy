@@ -49,37 +49,38 @@ def upload_file():
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             return render_template(
-                "simple.html",
+                "table.html",
                 tables=[STUDENTS.to_html(classes="data")],
                 titles=STUDENTS.columns.values,
                 page_restart="/",
-                page_run="/start",
+                page_read="/read",
             )
 
     return render_template("forms.html", page_restart=request.url)
 
 
+@app.route('/read')
+def read():
+    global pop
+    pop = PlanPopulation(
+        STUDENTS,
+        20,
+        2,
+    )
+    default_goals = pop.default_goals_dict
+    options = {op.replace(' ','_').lower():op + ': ' + val for op, val in default_goals.items()}
+    return render_template('read.html', page_restart='/', page_start='/start', options=options)
+
+
 @app.route("/start")
 def start():
-    return render_template("running.html")
+    return render_template("running.html", run_page='run', done_page='done')
 
 
 @app.route("/run")
 def run_algo():
     # filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
     # students = StudentGroup(filename)
-    pop = PlanPopulation(
-        STUDENTS,
-        20,
-        2,
-        goals_dict={
-            "spread_gender": "min",
-            "spread_score_math": "min",
-            "spread_score_spelling": "min",
-            "spread_size": "min",
-        },
-        conditions=["assignment_check"],
-    )
     pop.run(n_gen=2, verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
@@ -92,7 +93,7 @@ def run_algo():
 @app.route("/done")
 def present_result():
     return render_template(
-        "simple.html",
+        "table.html",
         tables=[BEST_PLAN.to_html(classes="data")],
         titles=BEST_PLAN.columns.values,
         page_restart="/",

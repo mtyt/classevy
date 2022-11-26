@@ -13,6 +13,12 @@
 </head>
 <body>
     <div class="loader"></div>
-    Running Algorithm
+    Running Algorithm with these goals:
+
+    <p>
+        {% for name, value in selected_goals.items() %}
+        {{name}}: {{value}} <br>
+        {% endfor %}
+    </p>
 </body>
 </html>

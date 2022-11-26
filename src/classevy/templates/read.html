@@ -8,7 +8,7 @@
 <form action="{{page_restart}}">
     <input type="submit" value="Restart" />
 </form>
-<form action="{{page_start}}" method="post">
+<form method="post">
     {% for name, value in options.items() %}
     <input type="checkbox" id={{name}} name={{name}} value={{value}} checked>
     <label for={{name}}>{{value}}</label><br>

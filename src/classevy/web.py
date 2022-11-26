@@ -59,7 +59,7 @@ def upload_file():
     return render_template("forms.html", page_restart=request.url)
 
 
-@app.route('/read')
+@app.route('/read', methods=["GET", "POST"])
 def read():
     global pop
     pop = PlanPopulation(
@@ -68,13 +68,22 @@ def read():
         2,
     )
     default_goals = pop.default_goals_dict
-    options = {op.replace(' ','_').lower():op + ': ' + val for op, val in default_goals.items()}
+    # create a dict to pass to the html template.
+    # the keys are valid variable names (without spaces) and the values are strings
+    # that combine the default goals key + value, like "spread_score: min"
+    options = {op.replace(' ', '_').lower(): op + ': ' + val for op, val in default_goals.items()}
+    select_options = {op.replace(' ', '_').lower(): op for op in default_goals}
+    if request.method == "POST":
+        # obtain the values from the checkboxes:
+        input_dict = {}
+        for op in options:
+            input_dict[op] = request.form.get(op) # looks like {spread_score:spread_score, spread_size:None}
+            #temp_string = ', '.join([': '.join([key, str(val)]) for key, val in input_dict.items()])
+            selected_goals_names = [key for key, val in input_dict.items() if val is not None]
+            selected_goals_dict = {key: val for key, val in default_goals.items() if key in selected_goals_names}
+            pop.goals_dict = selected_goals_dict
+        return render_template("running.html", run_page='run', done_page='done', selected_goals=selected_goals_dict)
     return render_template('read.html', page_restart='/', page_start='/start', options=options)
-
-
-@app.route("/start")
-def start():
-    return render_template("running.html", run_page='run', done_page='done')
 
 
 @app.route("/run")

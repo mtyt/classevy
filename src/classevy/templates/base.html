@@ -12,10 +12,10 @@
 </head>
 <body>
     <div id="content">{% block content %}{% endblock %}</div>
-    <div id="prints">{{string_to_print}}</div>
+    <div id="prints">{{string_to_print | safe}}</div>
     <div id="footer">
         {% block footer %}
-        &copy; Copyright 2008 by <a href="http://domain.invalid/">you</a>.
+        &copy; Copyright 2022 by <a href="http://domain.invalid/">you</a>.
         {% endblock %}
     </div>
 </body>

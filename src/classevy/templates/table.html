@@ -9,8 +9,5 @@
 <form action="{{page_read}}">
     <input type="submit" value="Read" />
 </form>
-{% for table in tables %}
-            {{titles[loop.index]}}
-            {{ table|safe }}
-{% endfor %}
+{{data | safe}}
 {% endblock %}

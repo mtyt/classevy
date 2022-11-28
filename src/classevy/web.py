@@ -48,10 +48,11 @@ def upload_file():
             # return redirect(url_for('download_file', name=filename))
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            students_no_nr = STUDENTS.copy()
+            students_no_nr.index.names = [None] # to remove empty row when displaying
             return render_template(
                 "table.html",
-                tables=[STUDENTS.to_html(classes="data")],
-                titles=STUDENTS.columns.values,
+                data=students_no_nr.to_html(),
                 page_read="/read",
                 title="You input data"
             )
@@ -101,11 +102,11 @@ def run_algo():
 
 @app.route("/done")
 def present_result():
+    BEST_PLAN.index.names = [None]
     return render_template(
         "table.html",
-        tables=[BEST_PLAN.to_html(classes="data")],
-        titles=BEST_PLAN.columns.values,
-        string_to_print=pop.pareto(),
+        data=BEST_PLAN.to_html(),
+        string_to_print=pop.pareto().to_html(),
         title="Best solution found"
     )
 

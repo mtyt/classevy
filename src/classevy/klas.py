@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from optime.ga import Population
-from .helpers import next_best, divide_list, Numeric
+from .helpers import next_best, divide_list, Numeric, divide_num
 
 
 rng = np.random.default_rng()
@@ -136,6 +136,26 @@ class StudentGroup(pd.DataFrame):
     def properties(self) -> list[str]:
         """returns a list of column names that are not required_columns."""
         return [col for col in self.columns if col not in self.required_columns]
+
+    def divide_one_prop(
+        self, prop: str, n_classes: int
+    ) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
+        """Perform a so-called Partition problem algorithm on the property 'prop' of
+        the plan. Assign each number in the descending-ordered list of the property to
+        the class for which the spread would increase the least. This is regardless of
+        all the other properties: what is the best spread we could obtain for this prop.
+        The method returns the classes (lists of the prop), the mean for each class,
+        and the standard deviation of those means across the classes.
+
+        Args:
+            prop: Represents the property to be divided over classes
+            n_classes: number of classes over which to divide
+
+        Returns:
+            classes, means, spread
+        """
+
+        return divide_list(list(self[prop].values), n_classes)
 
 
 class Klas:
@@ -612,23 +632,6 @@ class Plan:
         """Returns the maximum size of the classes."""
         return max(self.classes_size)  # type: ignore[attr-defined]
 
-    def divide_one_prop(self, prop: str) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
-        """Perform a so-called Partition problem algorithm on the property 'prop' of
-        the plan. Assign each number in the descending-ordered list of the property to
-        the class for which the spread would increase the least. This is regardless of
-        all the other properties: what is the best spread we could obtain for this prop.
-        The method returns the classes (lists of the prop), the mean for each class,
-        and the standard deviation of those means across the classes.
-
-        Args:
-            prop: Represents the property to be divided over classes
-
-        Returns:
-            classes, means, spread
-        """
-
-        return divide_list(list(self.students[prop].values), self.n_classes)
-
     @property
     def summary(self) -> dict:
         """Returns a dict with all the classes_prop and spread_prop."""
@@ -646,35 +649,49 @@ class Plan:
             elif "spread" in prop:
                 print("Spread of mean", prop, "over classes:", val)
 
-    def write_excel(self, filename):
-        """Write the plan to an Excel file. First page contains all students, next
-        pages show each class + average values for properties."""
-        plan_output = self.students.drop(columns=["options", "dna_assignment"])
-        klasses_output = [
+    @property
+    def classes_df_output(self) -> list[pd.DataFrame]:
+        """Returns a list of dataframes, one for each class, with some temporary
+        columns dropped.
+        """
+        return [
             k.students.drop(columns=["options", "dna_assignment", "final_assignment"])
             for k in self.classes
         ]
-        if os.path.exists(filename):
-            os.remove(filename)
-        with pd.ExcelWriter(filename, engine="openpyxl") as writer:
-            plan_output.to_excel(writer, sheet_name="All Students")
-            for i, stu in enumerate(klasses_output):
-                stu.to_excel(writer, sheet_name=f"Klas {self.classes[i].name}")
 
+    @property
+    def df_means_classes(self) -> list[pd.DataFrame]:
+        """Returns a list of dataframes, one for each class, with the averages of each
+        property in students.properties."""
         df_means_list = []
-        for stu in klasses_output:
+        for stu in self.classes_df_output:
             df_means = pd.DataFrame(columns=stu.columns, index=["Average"])
             for col in self.classes[0].students.properties:
                 mean = stu[col].mean()
                 df_means.iloc[0][col] = mean
             df_means_list.append(df_means)
+        return df_means_list
 
-        startrow = max([len(stu) for stu in klasses_output]) + 2
+    def write_excel(self, filename):
+        """Write the plan to an Excel file. First page contains all students, next
+        pages show each class + average values for properties."""
+        plan_output = self.students.drop(columns=["options", "dna_assignment"])
+        if os.path.exists(filename):
+            os.remove(filename)
+        with pd.ExcelWriter(filename, engine="openpyxl") as writer:
+            # All the students on first sheet:
+            plan_output.to_excel(writer, sheet_name="All Students")
+            # 1 sheet per class
+            for i, stu in enumerate(self.classes_df_output):
+                stu.to_excel(writer, sheet_name=f"Klas {self.classes[i].name}")
+
+        startrow = max([len(stu) for stu in self.classes_df_output]) + 2
         with pd.ExcelWriter(
             filename, engine="openpyxl", mode="a", if_sheet_exists="overlay"
         ) as writer:
+            # append averages below students in each class:
             for i, klas in enumerate(self.classes):
-                df_means_list[i].to_excel(
+                self.df_means_classes[i].to_excel(
                     writer,
                     sheet_name=f"Klas {klas.name}",
                     startrow=startrow,
@@ -709,6 +726,7 @@ class PlanPopulation(Population):
             dna = Plan.assignment
             parent_props = ["students", "n_classes"]
 
+        self.n_classes = n_classes
         plans = [PlanGA(students, n_classes) for _ in np.arange(n_pop)]
         super().__init__(plans, goals_dict, conditions)
 
@@ -719,3 +737,28 @@ class PlanPopulation(Population):
         default_goals = {"spread_" + prop: "min" for prop in self.students.properties}
         default_goals["spread_size"] = "min"
         return default_goals
+
+    @property
+    def df_all_students_goals_limits(self) -> pd.DataFrame:
+        """Returns a dataframe containing the best possible limits for all of the
+        properties if they have a goal in the goals_dict.
+        """
+        df = pd.DataFrame(
+            columns=self.default_goals_dict,
+            index=["mean in class" + str(i) for i in range(self.n_classes)]
+            + ["spread"],
+        )
+        for goal in df.columns:
+            prop = goal.removeprefix("spread_")
+            means: list[Numeric]
+            if prop == "size":
+                means = divide_num(len(self.students), self.n_classes)
+                spread = np.array(means).std()
+            else:
+                classes, means, spread = self.students.divide_one_prop(
+                    prop, self.n_classes
+                )
+            df.at["spread", goal] = spread
+            for i in range(self.n_classes):
+                df.at["mean in class" + str(i), goal] = means[i]
+        return df

@@ -104,10 +104,37 @@ def divide_list(
     for i in range(len(num_list)):
         # pick the number with the highest potential impact:
         num = biggest_impact(num_list, sets)
-        mean_stds = hypo_spread(num, sets)
-        # now add the num to the class that results in the smallest std:
-        index = np.argmin(np.array(mean_stds))
-        sets[index].append(num)
+        # if any of the classes is still empty, add it there:
+        if not all([len(c) for c in sets]):
+            for c in sets:
+                if len(c) == 0:
+                    c.append(num)
+                    break
+        else:
+            mean_stds = hypo_spread(num, sets)
+            # now add the num to the class that results in the smallest std:
+            index = np.argmin(np.array(mean_stds))
+            sets[index].append(num)
     means = [np.array(c).mean() if len(c) else 0 for c in sets]
     spread = np.array(means).std()
     return sets, means, spread
+
+
+def divide_num(num: Numeric, n_sets: int) -> list[int]:
+    """Divide a number num into n_sets equal integer parts, as best as possible.
+    For example, dividing 14 into 3 groups should yield [5, 5, 4]
+    
+    Args:
+        num: the number to divide
+        n_sets: how many groups to divide it in
+        
+    Returns:
+        sets: list of numbers divided
+    """
+    base: int = np.floor(num/n_sets)
+    rest = np.mod(num, n_sets)
+    sets = [base]*n_sets
+    for i in range(rest):
+        sets[i] += 1
+
+    return sets

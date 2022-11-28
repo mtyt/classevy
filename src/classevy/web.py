@@ -48,11 +48,10 @@ def upload_file():
             # return redirect(url_for('download_file', name=filename))
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            students_no_nr = STUDENTS.copy()
-            students_no_nr.index.names = [None]  # to remove empty row when displaying
+            STUDENTS.index.names = [None]  # to remove empty row when displaying
             return render_template(
                 "table.html",
-                data=students_no_nr.to_html(),
+                data=STUDENTS.to_html(),
                 page_read="/read",
                 title="You input data",
             )
@@ -100,7 +99,9 @@ def read():
             done_page="done",
             selected_goals=selected_goals_dict,
         )
-    return render_template("read.html", page_start="/start", options=options)
+    return render_template("read.html", students=STUDENTS.to_html(),
+                           target_limits=pop.df_all_students_goals_limits.to_html(),
+                           page_start="/start", options=options)
 
 
 @app.route("/run")

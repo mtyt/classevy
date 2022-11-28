@@ -648,6 +648,21 @@ class Plan:
                 print("Mean", prop, "per class:", val)
             elif "spread" in prop:
                 print("Spread of mean", prop, "over classes:", val)
+                
+    @property
+    def df_summary(self) -> pd.DataFrame:
+        """Returns a dataframe representation of the summary"""
+        df = pd.DataFrame(
+            columns=self.students.properties,
+            index=["mean in class" + str(i) for i in range(self.n_classes)]
+            + ["spread"],
+        )
+        for prop in df.columns:
+
+            for i in range(self.n_classes):
+                df.at["mean in class" + str(i), prop] = getattr(self, "classes_" + prop)[i]
+                df.at["spread", prop] = getattr(self, "spread_" + prop)
+        return df
 
     @property
     def classes_df_output(self) -> list[pd.DataFrame]:
@@ -744,12 +759,11 @@ class PlanPopulation(Population):
         properties if they have a goal in the goals_dict.
         """
         df = pd.DataFrame(
-            columns=self.default_goals_dict,
+            columns=self.students.properties,
             index=["mean in class" + str(i) for i in range(self.n_classes)]
             + ["spread"],
         )
-        for goal in df.columns:
-            prop = goal.removeprefix("spread_")
+        for prop in df.columns:
             means: list[Numeric]
             if prop == "size":
                 means = divide_num(len(self.students), self.n_classes)
@@ -758,7 +772,7 @@ class PlanPopulation(Population):
                 classes, means, spread = self.students.divide_one_prop(
                     prop, self.n_classes
                 )
-            df.at["spread", goal] = spread
+            df.at["spread", prop] = spread
             for i in range(self.n_classes):
-                df.at["mean in class" + str(i), goal] = means[i]
+                df.at["mean in class" + str(i), prop] = means[i]
         return df

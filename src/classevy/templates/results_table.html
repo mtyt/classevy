@@ -1,0 +1,24 @@
+
+{% extends "base.html" %}
+{% block title %}{{title}}{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+    
+{%block content %}
+<h1>The resulting classes:</h1>
+{% for key, data in class_list.items() %}
+<p>
+    Class {{key}}:
+</p>
+{{data | safe}}
+{% endfor %}
+<h1>Statistics of the optimization result:</h1>
+<p>Theoretically achievable best targets for optimization:</p>
+{{target_limits | safe}}
+<p>Achieved targets for optimization:</p>
+{{opt_targets | safe}}
+
+<h1>Other valid solutions on the Pareto Front:</h1>
+{{pareto | safe}}
+{% endblock %}

@@ -8,9 +8,11 @@ from flask import (
     redirect,
     send_from_directory,
     render_template,
+    url_for
 )
 from werkzeug.utils import secure_filename
 from classevy.klas import StudentGroup, PlanPopulation
+import pandas as pd
 
 
 UPLOAD_FOLDER = "data"
@@ -49,12 +51,7 @@ def upload_file():
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             STUDENTS.index.names = [None]  # to remove empty row when displaying
-            return render_template(
-                "table.html",
-                data=STUDENTS.to_html(),
-                page_read="/read",
-                title="You input data",
-            )
+            return redirect(url_for('read'))
 
     return render_template("forms.html")
 
@@ -111,19 +108,28 @@ def run_algo():
     pop.run(n_gen=2, verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
+    global best_plan
     best_plan = front.sort_values("sum").iloc[0].values[0]
-    global BEST_PLAN
-    BEST_PLAN = best_plan.students
+    global best_students
+    best_students = best_plan.students
     return "Done"
 
 
 @app.route("/done")
 def present_result():
-    BEST_PLAN.index.names = [None]
+    best_students.index.names = [None]
+    best_plan_classes = {}
+    for i, k in enumerate(best_plan.classes):
+        df = pd.concat([best_plan.classes_df_output[i], best_plan.df_means_classes[i]])
+        best_plan_classes[k.name] = df.to_html(na_rep='')
+        
+    pareto = pop.pareto().drop(columns=["Individual"])
     return render_template(
-        "table.html",
-        data=BEST_PLAN.to_html(),
-        string_to_print=pop.pareto().to_html(),
+        "results_table.html",
+        class_list=best_plan_classes,
+        target_limits=pop.df_all_students_goals_limits.to_html(na_rep=''),
+        opt_targets=best_plan.df_summary.to_html(na_rep=''),
+        pareto=pareto.to_html(na_rep=''),
         title="Best solution found",
     )
 

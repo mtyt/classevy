@@ -49,18 +49,18 @@ def upload_file():
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             students_no_nr = STUDENTS.copy()
-            students_no_nr.index.names = [None] # to remove empty row when displaying
+            students_no_nr.index.names = [None]  # to remove empty row when displaying
             return render_template(
                 "table.html",
                 data=students_no_nr.to_html(),
                 page_read="/read",
-                title="You input data"
+                title="You input data",
             )
 
     return render_template("forms.html")
 
 
-@app.route('/read', methods=["GET", "POST"])
+@app.route("/read", methods=["GET", "POST"])
 def read():
     global pop
     pop = PlanPopulation(
@@ -72,19 +72,35 @@ def read():
     # create a dict to pass to the html template.
     # the keys are valid variable names (without spaces) and the values are strings
     # that combine the default goals key + value, like "spread_score: min"
-    options = {op.replace(' ', '_').lower(): op + ': ' + val for op, val in default_goals.items()}
-    select_options = {op.replace(' ', '_').lower(): op for op in default_goals}
+    options = {
+        op.replace(" ", "_").lower(): op + ": " + val
+        for op, val in default_goals.items()
+    }
     if request.method == "POST":
         # obtain the values from the checkboxes:
         input_dict = {}
         for op in options:
-            input_dict[op] = request.form.get(op) # looks like {spread_score:spread_score, spread_size:None}
-            #temp_string = ', '.join([': '.join([key, str(val)]) for key, val in input_dict.items()])
-            selected_goals_names = [key for key, val in input_dict.items() if val is not None]
-            selected_goals_dict = {key: val for key, val in default_goals.items() if key in selected_goals_names}
+            input_dict[op] = request.form.get(
+                op
+            )  # looks like {spread_score:spread_score, spread_size:None}
+            # temp_string = ', '.join([': '.join([key, str(val)]) for key, val in
+            # input_dict.items()])
+            selected_goals_names = [
+                key for key, val in input_dict.items() if val is not None
+            ]
+            selected_goals_dict = {
+                key: val
+                for key, val in default_goals.items()
+                if key in selected_goals_names
+            }
             pop.goals_dict = selected_goals_dict
-        return render_template("running.html", run_page='run', done_page='done', selected_goals=selected_goals_dict)
-    return render_template('read.html', page_start='/start', options=options)
+        return render_template(
+            "running.html",
+            run_page="run",
+            done_page="done",
+            selected_goals=selected_goals_dict,
+        )
+    return render_template("read.html", page_start="/start", options=options)
 
 
 @app.route("/run")
@@ -107,7 +123,7 @@ def present_result():
         "table.html",
         data=BEST_PLAN.to_html(),
         string_to_print=pop.pareto().to_html(),
-        title="Best solution found"
+        title="Best solution found",
     )
 
 

@@ -1,18 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-
+{% extends "base.html" %}
+{% block title %}Running optimization...{% endblock %}
+{% block head %}
+    {{ super() }}
 <script>
     function navigate() {
         window.location.href = 'done';  // Redirects user to the /map route when 'run' is finished
     }
     fetch('run').then(navigate)
 </script>
-</head>
-<body>
-    <div class="loader"></div>
+{% endblock %}
+{%block content %}
+<div class="loader"></div>
     Running Algorithm with these goals:
 
     <p>
@@ -20,5 +18,4 @@
         {{name}}: {{value}} <br>
         {% endfor %}
     </p>
-</body>
-</html>
+{% endblock %}

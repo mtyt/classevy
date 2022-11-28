@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='mystyle.css') }}">
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+    <h1>{{ self.title() }}</h1>
+    <form action="{{url_for('upload_file')}}">
+        <input type="submit" value="Restart" />
+    </form>
+</head>
+<body>
+    <div id="content">{% block content %}{% endblock %}</div>
+    <div id="prints">{{string_to_print}}</div>
+    <div id="footer">
+        {% block footer %}
+        &copy; Copyright 2008 by <a href="http://domain.invalid/">you</a>.
+        {% endblock %}
+    </div>
+</body>
+</html>

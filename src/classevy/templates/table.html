@@ -1,14 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='mystyle.css') }}">
-</head>
-<body>
-<form action="{{page_restart}}">
-    <input type="submit" value="Restart" />
-</form>
+
+{% extends "base.html" %}
+{% block title %}{{title}}{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+    
+{%block content %}
 <form action="{{page_read}}">
     <input type="submit" value="Read" />
 </form>
@@ -16,5 +13,4 @@
             {{titles[loop.index]}}
             {{ table|safe }}
 {% endfor %}
-</body>
-</html>
+{% endblock %}

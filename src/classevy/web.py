@@ -52,11 +52,11 @@ def upload_file():
                 "table.html",
                 tables=[STUDENTS.to_html(classes="data")],
                 titles=STUDENTS.columns.values,
-                page_restart="/",
                 page_read="/read",
+                title="You input data"
             )
 
-    return render_template("forms.html", page_restart=request.url)
+    return render_template("forms.html")
 
 
 @app.route('/read', methods=["GET", "POST"])
@@ -83,7 +83,7 @@ def read():
             selected_goals_dict = {key: val for key, val in default_goals.items() if key in selected_goals_names}
             pop.goals_dict = selected_goals_dict
         return render_template("running.html", run_page='run', done_page='done', selected_goals=selected_goals_dict)
-    return render_template('read.html', page_restart='/', page_start='/start', options=options)
+    return render_template('read.html', page_start='/start', options=options)
 
 
 @app.route("/run")
@@ -105,7 +105,8 @@ def present_result():
         "table.html",
         tables=[BEST_PLAN.to_html(classes="data")],
         titles=BEST_PLAN.columns.values,
-        page_restart="/",
+        string_to_print=pop.pareto(),
+        title="Best solution found"
     )
 
 

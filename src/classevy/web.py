@@ -15,7 +15,7 @@ from classevy.klas import StudentGroup, PlanPopulation
 import pandas as pd
 
 
-UPLOAD_FOLDER = "/Users/mtytgat/code/classevy/data"
+UPLOAD_FOLDER = "data"
 ALLOWED_EXTENSIONS = {"csv"}
 
 app = Flask(__name__)
@@ -165,4 +165,4 @@ def download_plan():
 
 @app.route('/data/<name>')
 def download_file(name):
-    return send_from_directory(app.config["DATA_FOLDER"], name, as_attachment=True)
+    return send_from_directory(os.path.realpath(app.config["DATA_FOLDER"]), name, as_attachment=True)

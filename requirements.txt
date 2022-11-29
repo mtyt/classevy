@@ -10,7 +10,6 @@ beautifulsoup4==4.11.1
 black==22.10.0
 bleach==5.0.1
 cffi==1.15.1
--e git+ssh://git@github.com/mtyt/classevy.git@c44d821fd6b64a911e3526aa33a813e0c1a83c85#egg=classevy
 click==8.1.3
 contourpy==1.0.6
 cycler==0.11.0
@@ -61,7 +60,6 @@ notebook==6.5.2
 notebook_shim==0.2.2
 numpy==1.23.4
 openpyxl==3.0.10
--e git+ssh://git@github.com/mtyt/optime.git@49b2d10a380037b3d5276185ac76fd8879cfb368#egg=optime
 packaging==21.3
 pandas==1.5.1
 pandocfilters==1.5.0

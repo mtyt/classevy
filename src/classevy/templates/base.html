@@ -9,13 +9,15 @@
     <form action="{{url_for('upload_file')}}">
         <input type="submit" value="Restart" />
     </form>
+    <br>
 </head>
 <body>
     <div id="content">{% block content %}{% endblock %}</div>
     <div id="prints">{{string_to_print | safe}}</div>
+    <br>
     <div id="footer">
         {% block footer %}
-        &copy; Copyright 2022 by <a href="http://domain.invalid/">you</a>.
+        &copy; Copyright 2022 by Maarten Tytgat.
         {% endblock %}
     </div>
 </body>

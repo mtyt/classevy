@@ -5,8 +5,15 @@
 {% endblock %}
     
 {%block content %}
+Select a CSV file from your computer and set the number of classes into which the 
+students must be divided.
 <form method=post enctype=multipart/form-data>
   <input type=file name=file>
-  <input type=submit value=Upload>
+  <br>
+  <label for="n_classes">Number of classes:</label>
+  <input type="text" id="n_classes" name="n_classes" value="2" required>
+  <br>
+  <input type=submit value="Upload file">
 </form>
+
 {% endblock %}

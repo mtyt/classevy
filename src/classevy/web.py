@@ -55,6 +55,11 @@ def upload_file():
             global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             STUDENTS.index.names = [None]  # to remove empty row when displaying
+            # obtain n_classes:
+            global n_classes
+            n_classes = int(request.form.get("n_classes"))
+            if not isinstance(n_classes, int):
+                raise ValueError("Needs to be int")
             return redirect(url_for('read'))
 
     return render_template("forms.html")
@@ -66,7 +71,7 @@ def read():
     pop = PlanPopulation(
         STUDENTS,
         20,
-        2,
+        n_classes,
     )
     default_goals = pop.default_goals_dict
     # create a dict to pass to the html template.

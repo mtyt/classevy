@@ -68,12 +68,12 @@ def upload_file():
 @app.route("/read", methods=["GET", "POST"])
 def read():
     global pop
-    pop = PlanPopulation(
+    temp_pop = PlanPopulation(
         STUDENTS,
-        20,
+        1,
         n_classes,
     )
-    default_goals = pop.default_goals_dict
+    default_goals = temp_pop.default_goals_dict
     # create a dict to pass to the html template.
     # the keys are valid variable names (without spaces) and the values are strings
     # that combine the default goals key + value, like "spread_score: min"
@@ -93,20 +93,32 @@ def read():
             selected_goals_names = [
                 key for key, val in input_dict.items() if val is not None
             ]
-            selected_goals_dict = {
-                key: val
-                for key, val in default_goals.items()
-                if key in selected_goals_names
-            }
-            pop.goals_dict = selected_goals_dict
+        selected_goals_dict = {
+            key: val
+            for key, val in default_goals.items()
+            if key in selected_goals_names
+        }
+        goals_dict = selected_goals_dict
+        global n_gen
+        n_gen = int(request.form.get("n_gen"))
+        n_pop = int(request.form.get("n_pop"))
+        pop = PlanPopulation(
+            STUDENTS,
+            n_pop,
+            n_classes,
+            goals_dict=goals_dict
+        )
+        
         return render_template(
             "running.html",
             run_page="run",
             done_page="done",
             selected_goals=selected_goals_dict,
+            ga_settings={"Number of generations":n_gen,
+                         "Population size": n_pop}
         )
     return render_template("read.html", students=STUDENTS.to_html(),
-                           target_limits=pop.df_all_students_goals_limits.to_html(),
+                           target_limits=temp_pop.df_all_students_goals_limits.to_html(),
                            page_start="/start", options=options)
 
 
@@ -114,7 +126,7 @@ def read():
 def run_algo():
     # filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
     # students = StudentGroup(filename)
-    pop.run(n_gen=2, verbose=True)
+    pop.run(n_gen=n_gen, verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
     global best_plan

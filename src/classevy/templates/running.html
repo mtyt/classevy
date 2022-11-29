@@ -18,4 +18,10 @@
         {{name}}: {{value}} <br>
         {% endfor %}
     </p>
+    And these settings:
+    <p>
+        {% for name, value in ga_settings.items() %}
+        {{name}}: {{value}} <br>
+        {% endfor %}
+    </p>
 {% endblock %}

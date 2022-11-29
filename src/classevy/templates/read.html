@@ -22,6 +22,11 @@
     <label for={{name}}>{{value}}</label><br>
     <br>
     {% endfor %}
+    <p>Optionally, tune the settings for the Optimization algorithm.</p>
+    <label for="n_gen">Number of generations:</label>
+    <input type="text" id="n_gen" name="n_gen" value="2" required>
+    <label for="n_pop">Population size:</label>
+    <input type="text" id="n_pop" name="n_pop" value="20" required>
     <button type="submit">Confirm</button>
 </form>
 {% endblock %}

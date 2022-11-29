@@ -15,11 +15,15 @@ from classevy.klas import StudentGroup, PlanPopulation
 import pandas as pd
 
 
-UPLOAD_FOLDER = "data"
+UPLOAD_FOLDER = "/Users/mtytgat/code/classevy/data"
 ALLOWED_EXTENSIONS = {"csv"}
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["DATA_FOLDER"] = UPLOAD_FOLDER
+app.add_url_rule(
+    "/data/<name>", endpoint="download_file", build_only=True
+)
 
 
 def allowed_file(filename):
@@ -134,6 +138,14 @@ def present_result():
     )
 
 
-@app.route("/uploads/<name>")
+@app.route("/download_best_plan")
+def download_plan():
+    filename = "web_best_plan.xlsx"
+    filepath = os.path.join(app.config["DATA_FOLDER"], filename)
+    best_plan.write_excel(filepath)
+    return redirect(url_for('download_file', name=filename))
+
+
+@app.route('/data/<name>')
 def download_file(name):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+    return send_from_directory(app.config["DATA_FOLDER"], name, as_attachment=True)

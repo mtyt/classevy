@@ -12,6 +12,37 @@ th, td {
 tr:hover {background-color: coral;}
 tr:nth-child(even) {background-color: #f2f2f2;}
 
+#content {
+    margin: auto;
+  max-width: 700px;
+  padding: 20px
+}
+
 #prints {
     font-family: 'Courier New', Courier, monospace;
+}
+
+#footer {
+    position: sticky;
+    bottom: 0;
+    flex: 0 0 50px;
+    margin-top: auto;
+    background-color: #ddd;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#header {
+    position: sticky;
+    top: 0;
+    margin-bottom: auto;
+    flex: 0 0 50px;
+    background-color: rgb(195, 209, 244);
+}
+
+#restart {
+    float: right;
 }

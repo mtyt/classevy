@@ -5,13 +5,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='mystyle.css') }}">
     <title>Classevy 0.1</title>
     {% endblock %}
-    <h1>{% block title %}{% endblock %}</h1>
-    <form action="{{url_for('upload_file')}}">
-        <input type="submit" value="Restart" />
-    </form>
-    <br>
+    
 </head>
 <body>
+    <div id="header">
+        <h1>{% block title %}{% endblock %}</h1>
+        <form id="restart" action="{{url_for('upload_file')}}">
+            <input type="submit" value="Restart" />
+        </form>
+    </div>
     <div id="content">{% block content %}{% endblock %}</div>
     <div id="prints">{{string_to_print | safe}}</div>
     <br>

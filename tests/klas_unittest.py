@@ -38,6 +38,13 @@ class TestStudentGroup(unittest.TestCase):
             _ = klas.StudentGroup(0)
 
         self.assertRaises(TypeError, yield_error)
+        
+        # Take simple CSV and calculate best possible limits:
+        students_short = klas.StudentGroup(path.join(DATA_FOLDER, "students_short.csv"))
+        # for this example, each prop can be divided with 0 spread.
+        for prop in students_short.properties:
+            classes, means, spread = students_short.divide_one_prop(prop, 2)
+            self.assertEqual(spread, 0)
 
 
 class TestKlas(unittest.TestCase):

@@ -8,11 +8,13 @@ from flask import (
     redirect,
     send_from_directory,
     render_template,
-    url_for
+    url_for,
+    session
 )
 from werkzeug.utils import secure_filename
 from classevy.klas import StudentGroup, PlanPopulation
 import pandas as pd
+
 
 
 UPLOAD_FOLDER = "data"
@@ -21,6 +23,7 @@ ALLOWED_EXTENSIONS = {"csv"}
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["DATA_FOLDER"] = UPLOAD_FOLDER
+app.config["SECRET_KEY"] = os.urandom(12)
 app.add_url_rule(
     "/data/<name>", endpoint="download_file", build_only=True
 )
@@ -52,12 +55,12 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             # return redirect(url_for('download_file', name=filename))
-            global STUDENTS
             STUDENTS = import_csv(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             STUDENTS.index.names = [None]  # to remove empty row when displaying
+            session['STUDENTS'] = STUDENTS.to_json()
             # obtain n_classes:
-            global n_classes
             n_classes = int(request.form.get("n_classes"))
+            session['n_classes'] = n_classes
             if not isinstance(n_classes, int):
                 raise ValueError("Needs to be int")
             return redirect(url_for('read'))
@@ -67,11 +70,11 @@ def upload_file():
 
 @app.route("/read", methods=["GET", "POST"])
 def read():
-    global pop
+    STUDENTS = StudentGroup(pd.read_json(session['STUDENTS']))
     temp_pop = PlanPopulation(
         STUDENTS,
         1,
-        n_classes,
+        session['n_classes'],
     )
     default_goals = temp_pop.default_goals_dict
     # create a dict to pass to the html template.
@@ -99,22 +102,19 @@ def read():
             if key in selected_goals_names
         }
         goals_dict = selected_goals_dict
-        global n_gen
+        session['goals_dict'] = goals_dict
+
         n_gen = int(request.form.get("n_gen"))
         n_pop = int(request.form.get("n_pop"))
-        pop = PlanPopulation(
-            STUDENTS,
-            n_pop,
-            n_classes,
-            goals_dict=goals_dict
-        )
         
+        session['n_pop'] = n_pop
+        session['n_gen'] = n_gen
         return render_template(
             "running.html",
             run_page="run",
             done_page="done",
             selected_goals=selected_goals_dict,
-            ga_settings={"Number of generations":n_gen,
+            ga_settings={"Number of generations": n_gen,
                          "Population size": n_pop}
         )
     return render_template("read.html", students=STUDENTS.to_html(),
@@ -124,33 +124,42 @@ def read():
 
 @app.route("/run")
 def run_algo():
-    # filename = os.path.join(app.config["UPLOAD_FOLDER"], "students.csv")  # hard-coded
-    # students = StudentGroup(filename)
-    pop.run(n_gen=n_gen, verbose=True)
+    STUDENTS = StudentGroup(pd.read_json(session['STUDENTS']))
+    # pop is not JSON serializable to let this be the only method where it exists.
+    pop = PlanPopulation(
+            STUDENTS,
+            session['n_pop'],
+            session['n_classes'],
+            goals_dict=session['goals_dict']
+        )
+    pop.run(n_gen=session['n_gen'], verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
-    global best_plan
     best_plan = front.sort_values("sum").iloc[0].values[0]
-    global best_students
-    best_students = best_plan.students
+    filename = "web_best_plan.xlsx"
+    filepath = os.path.join(app.config["DATA_FOLDER"], filename)
+    best_plan.write_excel(filepath)
+    session['best_students'] = best_plan.students.to_json()
+    pareto = pop.pareto().drop(columns=["Individual"])
+    session['pareto_html'] = pareto.to_html(na_rep='')
+    session['target_limits'] = pop.df_all_students_goals_limits.to_html(na_rep='')
+    session['opt_targets'] = best_plan.df_summary.to_html(na_rep='')
+    best_plan_classes = {}
+    for i, k in enumerate(best_plan.classes):
+        df = pd.concat([best_plan.classes_df_output[i], best_plan.df_means_classes[i]])
+        best_plan_classes[k.name] = df.to_html(na_rep='')
+    session['best_plan_classes_html'] = best_plan_classes
     return "Done"
 
 
 @app.route("/done")
 def present_result():
-    best_students.index.names = [None]
-    best_plan_classes = {}
-    for i, k in enumerate(best_plan.classes):
-        df = pd.concat([best_plan.classes_df_output[i], best_plan.df_means_classes[i]])
-        best_plan_classes[k.name] = df.to_html(na_rep='')
-        
-    pareto = pop.pareto().drop(columns=["Individual"])
     return render_template(
         "results_table.html",
-        class_list=best_plan_classes,
-        target_limits=pop.df_all_students_goals_limits.to_html(na_rep=''),
-        opt_targets=best_plan.df_summary.to_html(na_rep=''),
-        pareto=pareto.to_html(na_rep=''),
+        class_list=session['best_plan_classes_html'],
+        target_limits=session['target_limits'],
+        opt_targets=session['opt_targets'],
+        pareto=session['pareto_html'],
         title="Best solution found",
     )
 
@@ -158,11 +167,10 @@ def present_result():
 @app.route("/download_best_plan")
 def download_plan():
     filename = "web_best_plan.xlsx"
-    filepath = os.path.join(app.config["DATA_FOLDER"], filename)
-    best_plan.write_excel(filepath)
     return redirect(url_for('download_file', name=filename))
 
 
 @app.route('/data/<name>')
 def download_file(name):
-    return send_from_directory(os.path.realpath(app.config["DATA_FOLDER"]), name, as_attachment=True)
+    return send_from_directory(os.path.realpath(app.config["DATA_FOLDER"]), name,
+                               as_attachment=True)

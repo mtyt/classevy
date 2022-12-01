@@ -23,7 +23,8 @@ class StudentGroup(pd.DataFrame):
 
     _metadata = [
         "required_columns"
-    ]  # avoid UserWarning: Pandas doesn't allow columns to be created via a new attribute name
+    ]  # avoid UserWarning: Pandas doesn't allow columns to be created via a new
+        # attribute name
 
     @classmethod
     def read_csv(cls, path: str) -> pd.DataFrame:
@@ -648,7 +649,7 @@ class Plan:
                 print("Mean", prop, "per class:", val)
             elif "spread" in prop:
                 print("Spread of mean", prop, "over classes:", val)
-                
+
     @property
     def df_summary(self) -> pd.DataFrame:
         """Returns a dataframe representation of the summary"""

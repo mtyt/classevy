@@ -660,7 +660,7 @@ class Plan:
     def summary(self) -> dict:
         """Returns a dict with all the classes_prop and spread_prop."""
         summary_dict = {}
-        for prop in self.students.properties:
+        for prop in self.students.properties + ["size"]:
             summary_dict["classes_" + prop] = getattr(self, "classes_" + prop)
             summary_dict["spread_" + prop] = getattr(self, "spread_" + prop)
         return summary_dict
@@ -755,6 +755,7 @@ class PlanPopulation(Population):
             raise TypeError("students should be a StudentGroup")
         # set population.students so it can be used to obtain the goals_dict
         self.students = students
+        self.n_classes = n_classes
         if goals_dict is None:
             goals_dict = self.default_goals_dict
         if conditions is None:
@@ -767,7 +768,6 @@ class PlanPopulation(Population):
             dna = Plan.assignment
             parent_props = ["students", "n_classes"]
 
-        self.n_classes = n_classes
         plans = [PlanGA(students, n_classes) for _ in np.arange(n_pop)]
         super().__init__(plans, goals_dict, conditions)
 
@@ -775,8 +775,15 @@ class PlanPopulation(Population):
     def default_goals_dict(self):
         # take all the spread_prop of all prop in students.properties, target = 'min'
         # and also size!
-        default_goals = {"spread_" + prop: "min" for prop in self.students.properties}
-        default_goals["spread_size"] = "min"
+        df_targets = self.df_all_students_goals_limits
+        default_goals = {}
+        for prop in df_targets.columns:
+            goal_name = "spread_" + prop
+            goal_direction = "min"
+            goal_target = df_targets.at["spread", prop]
+            default_goals[goal_name] = {"direction": goal_direction,
+                                        "target": goal_target}
+        
         return default_goals
 
     @property
@@ -785,7 +792,7 @@ class PlanPopulation(Population):
         properties if they have a goal in the goals_dict.
         """
         df = pd.DataFrame(
-            columns=self.students.properties,
+            columns=self.students.properties + ["size"],
             index=["mean in class" + str(i) for i in range(self.n_classes)]
             + ["spread"],
         )

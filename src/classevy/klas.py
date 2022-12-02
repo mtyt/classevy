@@ -198,6 +198,8 @@ class Klas:
         """return the length of the class.students."""
         return len(self.students)
 
+class NoSolutionError(Exception):
+    pass
 
 class Plan:
     """A Plan is a particular assignment of students over classes. It can be
@@ -215,7 +217,10 @@ class Plan:
         self.students = StudentGroup(deepcopy(students))
         self.n_classes = n_classes
         if assignment is None:
-            assignment = list(np.random.randint(0, n_classes, len(students)))
+            self.assignment_fixed = False  # Allow algo to retry with different assignment
+            assignment = list(rng.integers(0, n_classes, len(students)))
+        else:
+            self.assignment_fixed = True
         self.assignment = assignment  # use setter
 
     @property
@@ -228,7 +233,14 @@ class Plan:
         """Set the assignment and immediately calculate the final assignment."""
         self._assignment = val
         self.init_students_df()
-        self.do_assignment()
+        try:
+            self.do_assignment()
+        except NoSolutionError:
+            if not self.assignment_fixed:
+                assignment = list(rng.integers(0, self.n_classes, len(self.students)))
+                self.assignment = assignment  # making it recursive
+            else:
+                raise NoSolutionError("Assignment is fixed, algo currently at dead end.")
         self.improve_preferences()
 
     def spreadprops(self, prop: str) -> float:
@@ -441,6 +453,9 @@ class Plan:
                             f' {students.at[not_tog, "name"]}'
                         )
                     students.at[not_tog, "options"].remove(final_assignment)
+                    if not len(students.at[not_tog, "options"]):
+                        raise NoSolutionError("The current combination of student data"
+                                              + " and assignment yields no valid solution.")
             has_tog = len(student["together"]) > 0
             if has_tog and verbose:
                 print("together:", student["together"])

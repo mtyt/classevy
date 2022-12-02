@@ -24,7 +24,7 @@ class StudentGroup(pd.DataFrame):
     _metadata = [
         "required_columns"
     ]  # avoid UserWarning: Pandas doesn't allow columns to be created via a new
-        # attribute name
+    # attribute name
 
     @classmethod
     def read_csv(cls, path: str) -> pd.DataFrame:
@@ -198,8 +198,10 @@ class Klas:
         """return the length of the class.students."""
         return len(self.students)
 
+
 class NoSolutionError(Exception):
     pass
+
 
 class Plan:
     """A Plan is a particular assignment of students over classes. It can be
@@ -217,7 +219,9 @@ class Plan:
         self.students = StudentGroup(deepcopy(students))
         self.n_classes = n_classes
         if assignment is None:
-            self.assignment_fixed = False  # Allow algo to retry with different assignment
+            self.assignment_fixed = (
+                False  # Allow algo to retry with different assignment
+            )
             assignment = list(rng.integers(0, n_classes, len(students)))
         else:
             self.assignment_fixed = True
@@ -240,7 +244,9 @@ class Plan:
                 assignment = list(rng.integers(0, self.n_classes, len(self.students)))
                 self.assignment = assignment  # making it recursive
             else:
-                raise NoSolutionError("Assignment is fixed, algo currently at dead end.")
+                raise NoSolutionError(
+                    "Assignment is fixed, algo currently at dead end."
+                )
         self.improve_preferences()
 
     def spreadprops(self, prop: str) -> float:
@@ -454,8 +460,10 @@ class Plan:
                         )
                     students.at[not_tog, "options"].remove(final_assignment)
                     if not len(students.at[not_tog, "options"]):
-                        raise NoSolutionError("The current combination of student data"
-                                              + " and assignment yields no valid solution.")
+                        raise NoSolutionError(
+                            "The current combination of student data"
+                            + " and assignment yields no valid solution."
+                        )
             has_tog = len(student["together"]) > 0
             if has_tog and verbose:
                 print("together:", student["together"])
@@ -676,7 +684,9 @@ class Plan:
         for prop in df.columns:
 
             for i in range(self.n_classes):
-                df.at["mean in class" + str(i), prop] = getattr(self, "classes_" + prop)[i]
+                df.at["mean in class" + str(i), prop] = getattr(
+                    self, "classes_" + prop
+                )[i]
                 df.at["spread", prop] = getattr(self, "spread_" + prop)
         return df
 

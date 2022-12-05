@@ -1,4 +1,5 @@
 # Classevy
+## Introduction
 A good friend of mine is a teacher in elementary school and every year she
 faces the same problem: having to divide her students into 2 classes. She wants
 to divide them as evenly as possible based on multiple criteria:
@@ -48,4 +49,66 @@ be in the same class)
 wants to be in the same class with - the algoritm will strive to satisfy at
 least 1 preference.)
 
+For an example file, see [here](https://github.com/mtyt/classevy/blob/main/data/students_example.csv).
+
+## Instructions (for Mac or Linux - or probably [git-bash on Windows](https://git-scm.com/download/win))
+To run the algorithm on your own computer, follow these instructions. I'm assuming you
+have python3 installed, as well as Jupyter.
+I recommend using a virtual environment. If you don't have it installed yet, do:
+
+    $ python -m pip install --user virtualenv
+
+Clone the `classevy` repository somewhere and cd into it:
+
+    $ git clone https://github.com/mtyt/classevy.git
+    $ cd classevy 
+
+or use SSH if you know how.
+Make a new virtual environment called `env` and activate it:
+
+    $ virtualenv env
+    $ source env/bin/activate
+
+Then install the `optime` package from github:
+
+    $ python -m pip install 'optime @ git+https://github.com/mtyt/optime'
+
+Since we're using the 'src-layout' structure in this repository, we have to install the
+package before we can import it. We use an 'editable' install, in case you want to tinker
+with the source code and see those changes when you import the package:
+
+    $ pip install -e .
+
+Install Jupyter:
+
+    $ pip install jupyter
+    
+Then check where Jupyter is found:
+
+    $ which jupyter
+
+This should return a path ending in `classevy/env/bin/jupyter`. If not, restart your
+terminal and don't forget to activate your virtual environment again with `source env/bin/activate`.
+Then tell Jupyter to create a kernel linked to this venv:
+
+    $ ipython kernel install --user --name=env_classevy
+
+So now when you start Jupyter from `env`, you can choose the `env_classevy` kernel with all
+the right packages installed in it.
+
+
+Now you're ready to fire up Jupyter Notebook:
+
+    $ jupyter notebook
+
+In the browser, go to `examples` and open the notebook called `optimize_class.ipynb`.
+Before you run any cells, got to the menu `Kernel > Change kernel` and choose env_classevy or whatever you called it.
+If, when you run the first cell, you get an error saying that the module `classevy` can't be found,
+then probably something went wrong in the linking of the Jupyter kernel to the virtual
+environment. I recommend to repeat the 3 steps above and make sure to check the path
+of `jupyter`.
+
+## Feedback
 This project can be found on [GitHub](https://github.com/mtyt/classevy).
+
+Any feedback, suggestions, criticism can be emailed to maarten.tytgat@gmail.com

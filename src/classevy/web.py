@@ -40,6 +40,7 @@ def import_csv(file):
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
+    session.clear()
     if request.method == "POST":
         # check if the post request has the file part
         if "file" not in request.files:
@@ -81,7 +82,7 @@ def read():
     # the keys are valid variable names (without spaces) and the values are strings
     # that combine the default goals key + value, like "spread_score: min"
     options = {
-        op.replace(" ", "_").lower(): op + ": " + val
+        op.replace(" ", "_").lower(): op + ": " + val["direction"]
         for op, val in default_goals.items()
     }
     if request.method == "POST":

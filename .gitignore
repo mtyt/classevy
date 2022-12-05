@@ -5,6 +5,9 @@ test_assignment_algo.ipynb
 criteria.txt
 data/students_evy.csv
 data/students_evy_no_cond.csv
+data/best_plan_evy.xlsx
+data/web_best_plan.xlsx
+data/best_plan.xlsx
 
 # profiling
 profiled*

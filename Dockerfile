@@ -1,21 +1,6 @@
 
 FROM tiangolo/uwsgi-nginx-flask:python3.11
 
-RUN mkdir /code
-RUN mkdir /code/data
-WORKDIR /code
-ADD requirements.txt /code/
-RUN apt-get update && apt-get install -y python3-pip git
-RUN pip install --upgrade pip
-RUN pip install --upgrade flask
-RUN pip install uwsgi
-RUN pip install -r requirements.txt --no-cache-dir
-RUN pip3 install --no-cache-dir "optime @ git+https://github.com/mtyt/optime"
-
-# add all contents of src into /code/
-ADD src /code/
-COPY data/students_example.csv /code/data
-
 # ssh
 ENV SSH_PASSWD "root:Docker!"
 RUN apt-get update \
@@ -25,6 +10,25 @@ RUN apt-get update \
 	&& echo "$SSH_PASSWD" | chpasswd 
 
 COPY sshd_config /etc/ssh/
+
+RUN mkdir /code
+RUN mkdir /code/data
+WORKDIR /code
+
+RUN apt-get update && apt-get install -y python3-pip git
+RUN pip install --upgrade pip
+RUN pip3 install --no-cache-dir "optime @ git+https://github.com/mtyt/optime"
+RUN pip install --upgrade flask
+RUN pip install uwsgi
+ADD requirements.txt /code/
+RUN pip install -r requirements.txt
+
+
+# add all contents of src into /code/
+ADD src /code/
+COPY data/students_example.csv /code/data
+
+
 COPY init.sh /usr/local/bin/
 COPY uwsgi.ini /app/
 	

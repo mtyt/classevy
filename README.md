@@ -1,8 +1,8 @@
-# Classevy
+# Classevy [<b>kla</b>·suh·vai]: a students-into-classes-divider tool
 ## Introduction
 A good friend of mine is a teacher in elementary school and every year she
 faces the same problem: having to divide her students into 2 classes. She wants
-to divide them as evenly as possible based on multiple criteria:
+to divide them as evenly as possible based on multiple criteria, like:
 - gender
 - scores on math and spelling
 - whether they need extra attention

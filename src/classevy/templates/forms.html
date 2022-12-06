@@ -5,11 +5,13 @@
 {% endblock %}
     
 {%block content %}
-<p>Select a CSV file from your computer and set the number of classes into which the
+<p>Select an Excel or CSV file from your computer and set the number of classes into which the
   students must be divided.
-  A CSV file can be generated from Excel, Google Sheets or notepad. It needs to have the following format:</p>
+  A CSV file can be generated from Excel, Google Sheets or notepad. Use ';' to separate
+  fields in the CSV file (since ',' is used inside some columns).
+
+  The table needs to have the following format:</p>
   <ul>
-  <li>Use ';' to separate fields.</li>
   <li>The first column must be named 'number' and contain the students' numbers (which must be unique)</li>
   <li>The second column must be named 'name' and contain students' names</li>
   <li>The next columns can be called anything, but should contain things like student scores, gender, etc.

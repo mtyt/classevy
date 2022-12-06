@@ -8,6 +8,7 @@ data/students_evy_no_cond.csv
 data/best_plan_evy.xlsx
 data/web_best_plan.xlsx
 data/best_plan.xlsx
+examples/Example_Best_Plan.xlsx
 
 # profiling
 profiled*

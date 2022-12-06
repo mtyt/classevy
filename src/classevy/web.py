@@ -133,7 +133,7 @@ def run_algo():
             session['n_classes'],
             goals_dict=session['goals_dict']
         )
-    pop.run(n_gen=session['n_gen'], verbose=True)
+    pop.run(n_gen=session['n_gen'], mutprob=0.2, stop_on_steady_n=3, verbose=True)
     front = pop.pareto()
     front["sum"] = sum([front[col] for col in pop.goals_names])
     best_plan = front.sort_values("sum").iloc[0].values[0]

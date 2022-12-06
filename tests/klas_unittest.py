@@ -28,8 +28,13 @@ class TestStudentGroup(unittest.TestCase):
         students = klas.StudentGroup(df_students)
         self.assertIsInstance(students, klas.StudentGroup)
 
-        # 2: start from string (path)
+        # 2: start from string (path) - CSV
         students = klas.StudentGroup(path.join(DATA_FOLDER, "students.csv"))
+        self.assertIsInstance(students, klas.StudentGroup)
+        self.assertEqual(students.size, len(students))
+        
+        # 3: start from string (path) - Excel
+        students = klas.StudentGroup(path.join(DATA_FOLDER, "students_example.xlsx"))
         self.assertIsInstance(students, klas.StudentGroup)
         self.assertEqual(students.size, len(students))
 

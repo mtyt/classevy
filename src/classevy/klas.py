@@ -27,27 +27,57 @@ class StudentGroup(pd.DataFrame):
     # attribute name
 
     @classmethod
-    def read_csv(cls, path: str) -> pd.DataFrame:
-        """Correctly parse the CSV file and return a dataframe."""
+    def read_file(cls, path: str) -> pd.DataFrame:
+        """Correctly parse an Excel or CSV file and return a dataframe."""
 
-        def read_tuple(x: str) -> tuple:
+        def read_tuple(x: str | Numeric) -> tuple:
             if x == "":
                 x_n = ()
             else:
+                if not isinstance(x, str):
+                    try:
+                        x = str(x)
+                    except Exception:
+                        raise ValueError("can't make x string")
                 x_n = ast.literal_eval(x)
                 if not isinstance(x_n, tuple):
                     return tuple([x_n])
             return x_n
 
-        df: pd.DataFrame = pd.read_csv(
-            path,
-            delimiter=";",
-            converters={
+        # Determine the file type
+        extension = os.path.splitext(path)
+        excel_extensions = [".xlsx", "xls"]
+        csv_extensions = [".csv", ""]
+        if extension in excel_extensions:
+            filetype = 'excel'
+        elif extension in csv_extensions:
+            filetype = 'csv'
+        else:
+            raise ValueError(f"Filetype with extension {extension} not supported." +
+                             "Valid extensions are " +
+                             ', '.join(excel_extensions + csv_extensions) +
+                             ". Files without extensions are assumed to be CSV.")
+            
+        conv = {
                 "not_together": read_tuple,
                 "together": read_tuple,
                 "preferences": read_tuple,
-            },
-        )
+            }
+        df: pd.DataFrame
+        if filetype == 'csv':
+            df = pd.read_csv(
+                path,
+                delimiter=";",
+                converters=conv,
+            )
+        elif filetype == 'excel':
+            df = pd.read_excel(
+                path,
+                converters=conv
+            )
+        else:
+            raise ValueError("No other extensions supported.")
+        
         df = df.set_index("number", verify_integrity=True)
 
         # Now perform some checks on the data.
@@ -120,7 +150,7 @@ class StudentGroup(pd.DataFrame):
         if isinstance(data, pd.DataFrame):
             super().__init__(data)
         elif isinstance(data, str):
-            df_students = StudentGroup.read_csv(data)
+            df_students = StudentGroup.read_file(data)
             super().__init__(df_students)
         else:
             raise TypeError(

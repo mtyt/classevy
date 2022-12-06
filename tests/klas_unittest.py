@@ -32,7 +32,7 @@ class TestStudentGroup(unittest.TestCase):
         students = klas.StudentGroup(path.join(DATA_FOLDER, "students.csv"))
         self.assertIsInstance(students, klas.StudentGroup)
         self.assertEqual(students.size, len(students))
-        
+
         # 3: start from string (path) - Excel
         students = klas.StudentGroup(path.join(DATA_FOLDER, "students_example.xlsx"))
         self.assertIsInstance(students, klas.StudentGroup)
@@ -43,7 +43,7 @@ class TestStudentGroup(unittest.TestCase):
             _ = klas.StudentGroup(0)
 
         self.assertRaises(TypeError, yield_error)
-        
+
         # Take simple CSV and calculate best possible limits:
         students_short = klas.StudentGroup(path.join(DATA_FOLDER, "students_short.csv"))
         # for this example, each prop can be divided with 0 spread.
@@ -107,10 +107,10 @@ class TestPlan(unittest.TestCase):
 
             _ = p_1.summary
             p_1.print_summary()
-            
+
             # classes should have not 'options' in their students.properties
             for k in p_1.classes:
-                self.assertTrue('options' not in k.students.properties)
+                self.assertTrue("options" not in k.students.properties)
 
     def test_do_assignment_improve(self):
         """Some more tests for functions in class with different conditions."""
@@ -135,7 +135,9 @@ class TestPlan(unittest.TestCase):
         students = klas.StudentGroup(path.join(DATA_FOLDER, "students_no_cond.csv"))
         p_1 = klas.Plan(students, 2)
         self.assertTrue(p_1.assignment_check)
-        all_pref_are_self = all([stu['preferences'] == (i,) for i, stu in students.iterrows()])
+        all_pref_are_self = all(
+            [stu["preferences"] == (i,) for i, stu in students.iterrows()]
+        )
         self.assertTrue(all_pref_are_self)
 
 

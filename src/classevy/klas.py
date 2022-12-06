@@ -18,8 +18,7 @@ class StudentGroup(pd.DataFrame):
     """Any list of Students. We can do some basic calculations on this list.
     TODO: Currently, df is not automatically updated. This can cause issues if
     we add students after init.
-    TODO: I think we should get rid of the Student class altogether and
-    Studentgroup should just be a DataFrame."""
+    """
 
     _metadata = [
         "required_columns"
@@ -49,35 +48,34 @@ class StudentGroup(pd.DataFrame):
         excel_extensions = [".xlsx", "xls"]
         csv_extensions = [".csv", ""]
         if extension in excel_extensions:
-            filetype = 'excel'
+            filetype = "excel"
         elif extension in csv_extensions:
-            filetype = 'csv'
+            filetype = "csv"
         else:
-            raise ValueError(f"Filetype with extension {extension} not supported." +
-                             "Valid extensions are " +
-                             ', '.join(excel_extensions + csv_extensions) +
-                             ". Files without extensions are assumed to be CSV.")
-            
+            raise ValueError(
+                f"Filetype with extension {extension} not supported."
+                + "Valid extensions are "
+                + ", ".join(excel_extensions + csv_extensions)
+                + ". Files without extensions are assumed to be CSV."
+            )
+
         conv = {
-                "not_together": read_tuple,
-                "together": read_tuple,
-                "preferences": read_tuple,
-            }
+            "not_together": read_tuple,
+            "together": read_tuple,
+            "preferences": read_tuple,
+        }
         df: pd.DataFrame
-        if filetype == 'csv':
+        if filetype == "csv":
             df = pd.read_csv(
                 path,
                 delimiter=";",
                 converters=conv,
             )
-        elif filetype == 'excel':
-            df = pd.read_excel(
-                path,
-                converters=conv
-            )
+        elif filetype == "excel":
+            df = pd.read_excel(path, converters=conv)
         else:
             raise ValueError("No other extensions supported.")
-        
+
         df = df.set_index("number", verify_integrity=True)
 
         # Now perform some checks on the data.
@@ -811,9 +809,11 @@ class PlanPopulation(Population):
             goal_name = "spread_" + prop
             goal_direction = "min"
             goal_target = df_targets.at["spread", prop]
-            default_goals[goal_name] = {"direction": goal_direction,
-                                        "target": goal_target}
-        
+            default_goals[goal_name] = {
+                "direction": goal_direction,
+                "target": goal_target,
+            }
+
         return default_goals
 
     @property

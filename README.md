@@ -49,7 +49,8 @@ be in the same class)
 wants to be in the same class with - the algoritm will strive to satisfy at
 least 1 preference.)
 
-For an example file, see [here](https://github.com/mtyt/classevy/blob/main/data/students_example.csv).
+For an example file, see [here (CSV)](https://github.com/mtyt/classevy/blob/main/data/students_example.csv)
+or [here (Excel)](https://github.com/mtyt/classevy/blob/main/data/students_example.xlsx).
 
 ## Instructions to install repository (for Mac or Linux - or probably [git-bash on Windows](https://git-scm.com/download/win))
 To run the algorithm on your own computer, follow these instructions. I'm assuming you

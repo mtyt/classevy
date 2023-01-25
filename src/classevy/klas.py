@@ -3,7 +3,7 @@ to classes."""
 from functools import partial
 import ast
 import os
-from typing import Optional
+from typing import Optional, Union, List, Tuple
 from copy import deepcopy
 import numpy as np
 import pandas as pd
@@ -29,7 +29,7 @@ class StudentGroup(pd.DataFrame):
     def read_file(cls, path: str) -> pd.DataFrame:
         """Correctly parse an Excel or CSV file and return a dataframe."""
 
-        def read_tuple(x: str | Numeric) -> tuple:
+        def read_tuple(x: Union[str, Numeric]) -> tuple:
             if x == "":
                 x_n = ()
             else:
@@ -135,8 +135,8 @@ class StudentGroup(pd.DataFrame):
                         )
         return df
 
-    def __init__(self, data: Optional[pd.DataFrame | str]) -> None:
-        required_columns: list[str] = [
+    def __init__(self, data: Optional[Union[pd.DataFrame, str]]) -> None:
+        required_columns: List[str] = [
             "name",
             "together",
             "not_together",
@@ -162,13 +162,13 @@ class StudentGroup(pd.DataFrame):
         return len(self)
 
     @property
-    def properties(self) -> list[str]:
+    def properties(self) -> List[str]:
         """returns a list of column names that are not required_columns."""
         return [col for col in self.columns if col not in self.required_columns]
 
     def divide_one_prop(
         self, prop: str, n_classes: int
-    ) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
+    ) -> Tuple[List[List[Numeric]], List[Numeric], Numeric]:
         """Perform a so-called Partition problem algorithm on the property 'prop' of
         the plan. Assign each number in the descending-ordered list of the property to
         the class for which the spread would increase the least. This is regardless of
@@ -195,8 +195,8 @@ class Klas:
     def __init__(
         self,
         name: Optional[str] = None,
-        students: Optional[str | pd.DataFrame | StudentGroup] = None,
-        conditions: Optional[list[str]] = None,
+        students: Optional[Union[str, pd.DataFrame, StudentGroup]] = None,
+        conditions: Optional[List[str]] = None,
     ) -> None:
         self.name = name
         if students is None:
@@ -240,7 +240,7 @@ class Plan:
         self,
         students: StudentGroup,
         n_classes: int = 2,
-        assignment: Optional[list[int]] = None,
+        assignment: Optional[List[int]] = None,
     ):
         if not isinstance(students, StudentGroup):
             raise TypeError("students should be a StudentGroup")
@@ -256,12 +256,12 @@ class Plan:
         self.assignment = assignment  # use setter
 
     @property
-    def assignment(self) -> list[int]:
+    def assignment(self) -> List[int]:
         """returns self._assignment."""
         return self._assignment
 
     @assignment.setter
-    def assignment(self, val: list[int]) -> None:
+    def assignment(self, val: List[int]) -> None:
         """Set the assignment and immediately calculate the final assignment."""
         self._assignment = val
         self.init_students_df()
@@ -283,7 +283,7 @@ class Plan:
         """
         return np.array(self.allprops(prop)).std()
 
-    def allprops(self, prop: str) -> list[int | float]:
+    def allprops(self, prop: str) -> List[Union[int, float]]:
         """Returns a list of the mean of property for each class in the list.
         In case of prop='size', return the size of each class.
         """
@@ -367,10 +367,10 @@ class Plan:
         students = self.students
         for i in students.index.values:
             student: pd.Series = students.loc[i]
-            curr_options: list[int] = student["options"]
+            curr_options: List[int] = student["options"]
             curr_dna: int = student["dna_assignment"]
             dna_in_options: bool = curr_dna in curr_options
-            curr_pref: tuple[int] = student["preferences"]
+            curr_pref: Tuple[int] = student["preferences"]
             if verbose:
                 print("\n----------")
                 print(i, student["name"])
@@ -384,7 +384,7 @@ class Plan:
                 # first choose a final_assignment based on
                 # 1. look at previous students in the current student's
                 # preferences.
-                prev_in_pref: list[int] = [pref for pref in curr_pref if pref < i]
+                prev_in_pref: List[int] = [pref for pref in curr_pref if pref < i]
                 if verbose:
                     print("Previous students in preferences:", prev_in_pref)
                 df_pref: pd.DataFrame = students.loc[prev_in_pref]
@@ -509,7 +509,7 @@ class Plan:
         in order to improve its pref_satisfied to be >0.
         """
         original_assignment: int = df.at[i, "final_assignment"]
-        other_options: list[int] = [
+        other_options: List[int] = [
             j for j in df.at[i, "options"] if not j == original_assignment
         ]
         for option in other_options + [original_assignment]:  # if other options
@@ -534,12 +534,12 @@ class Plan:
         pref_satisfied>0 increases.
         """
         count_pref_sat: int = sum(df["pref_satisfied"] > 0)
-        preferences: tuple[int] = df.at[i, "preferences"]
+        preferences: Tuple[int] = df.at[i, "preferences"]
         # can I change one of the prefered student's classes without making
         # their pref_satisfied 0?
         for k in preferences:
             original_assignment: int = df.at[k, "final_assignment"]
-            other_options: list[int] = [
+            other_options: List[int] = [
                 j for j in df.at[k, "options"] if not j == original_assignment
             ]
             for option in other_options + [original_assignment]:  # if other
@@ -640,7 +640,7 @@ class Plan:
         return check
 
     @property
-    def final_assignment(self) -> list[int]:
+    def final_assignment(self) -> List[int]:
         """After assignment algo, return assignments."""
         return self.students["final_assignment"].values
 
@@ -650,7 +650,7 @@ class Plan:
         return self.check_assignment()
 
     @property
-    def classes(self) -> list[Klas]:
+    def classes(self) -> List[Klas]:
         """Return the classes of the Plan, with all the students assigned to
         them.
         """
@@ -719,7 +719,7 @@ class Plan:
         return df
 
     @property
-    def classes_df_output(self) -> list[pd.DataFrame]:
+    def classes_df_output(self) -> List[pd.DataFrame]:
         """Returns a list of dataframes, one for each class, with some temporary
         columns dropped.
         """
@@ -729,7 +729,7 @@ class Plan:
         ]
 
     @property
-    def df_means_classes(self) -> list[pd.DataFrame]:
+    def df_means_classes(self) -> List[pd.DataFrame]:
         """Returns a list of dataframes, one for each class, with the averages of each
         property in students.properties."""
         df_means_list = []
@@ -827,7 +827,7 @@ class PlanPopulation(Population):
             + ["spread"],
         )
         for prop in df.columns:
-            means: list[Numeric]
+            means: List[Numeric]
             if prop == "size":
                 means = divide_num(len(self.students), self.n_classes)
                 spread = np.array(means).std()

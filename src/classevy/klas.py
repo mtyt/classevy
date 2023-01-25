@@ -784,6 +784,7 @@ class PlanPopulation(Population):
         # set population.students so it can be used to obtain the goals_dict
         self.students = students
         self.n_classes = n_classes
+        self.n_pop = n_pop
         if goals_dict is None:
             goals_dict = self.default_goals_dict
         if conditions is None:
@@ -795,9 +796,15 @@ class PlanPopulation(Population):
 
             dna = Plan.assignment
             parent_props = ["students", "n_classes"]
+            
+            def __repr__(self):
+                return f"Plan({self.n_classes} classes, {len(self.students)} students)"
 
         plans = [PlanGA(students, n_classes) for _ in np.arange(n_pop)]
         super().__init__(plans, goals_dict, conditions)
+
+    def __repr__(self):
+        return f"PlanPopulation({self.n_pop} Plans, {self.n_classes} classes)"
 
     @property
     def default_goals_dict(self):

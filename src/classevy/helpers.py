@@ -1,11 +1,11 @@
 import numpy as np
-from typing import Union
+from typing import Union, List
 
 Numeric = Union[int, float, complex, np.number]
 
 
 # some general functions
-def next_best(options: list[int], choice: int) -> int:
+def next_best(options: List[int], choice: int) -> int:
     """find the option that equals choice, or the next item or if there is no
     next item, the first item
 
@@ -21,7 +21,7 @@ def next_best(options: list[int], choice: int) -> int:
     return options[idx]
 
 
-def hypo_spread(num: Numeric, sets: list[list[Numeric]]) -> list[Numeric]:
+def hypo_spread(num: Numeric, sets: List[List[Numeric]]) -> List[Numeric]:
     """Hypothetically assigning this num to one class or the other would result in
     which new spreads?
     We want to assign it to the option which causes the smallest new spread.
@@ -47,7 +47,7 @@ def hypo_spread(num: Numeric, sets: list[list[Numeric]]) -> list[Numeric]:
     return mean_stds
 
 
-def biggest_impact(num_list: list[Numeric], sets: list[list[Numeric]]) -> Numeric:
+def biggest_impact(num_list: List[Numeric], sets: List[List[Numeric]]) -> Numeric:
     """Which num in num_list has the biggest impact on the spread?
     Pop it from the num_list.
 
@@ -66,7 +66,7 @@ def biggest_impact(num_list: list[Numeric], sets: list[list[Numeric]]) -> Numeri
     return num_list.pop(index)
 
 
-def pop_absmax(lst: list[Numeric]) -> Numeric:
+def pop_absmax(lst: List[Numeric]) -> Numeric:
     """Find the maximum absolute value in a list and pop it from the list.
 
     Args:
@@ -86,8 +86,8 @@ def pop_absmax(lst: list[Numeric]) -> Numeric:
 
 
 def divide_list(
-    num_list: list[Numeric], n_sets: int
-) -> tuple[list[list[Numeric]], list[Numeric], Numeric]:
+    num_list: List[Numeric], n_sets: int
+) -> tuple[List[List[Numeric]], List[Numeric], Numeric]:
     sets: list = [[] for _ in range(n_sets)]
     """Divide a list of numbers into a number of sets trying to minimize the spread
     over the mean values of each set.
@@ -120,7 +120,7 @@ def divide_list(
     return sets, means, spread
 
 
-def divide_num(num: Numeric, n_sets: int) -> list[int]:
+def divide_num(num: Numeric, n_sets: int) -> List[int]:
     """Divide a number num into n_sets equal integer parts, as best as possible.
     For example, dividing 14 into 3 groups should yield [5, 5, 4]
     

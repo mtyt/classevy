@@ -44,7 +44,7 @@ class StudentGroup(pd.DataFrame):
             return x_n
 
         # Determine the file type
-        extension = os.path.splitext(path)
+        extension = os.path.splitext(path)[-1]
         excel_extensions = [".xlsx", "xls"]
         csv_extensions = [".csv", ""]
         if extension in excel_extensions:

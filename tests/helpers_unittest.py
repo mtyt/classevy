@@ -46,11 +46,11 @@ class TestDivide(unittest.TestCase):
         self.assertEqual(means, [1, 1, 1])
         self.assertEqual(spread, 0)
 
-        # the algo will NOT favor filling empty lists first:
+        # the algo will favor filling empty lists first:
         sets, means, spread = helpers.divide_list([-1, 1, 0], 3)
-        self.assertEqual(sets, [[-1, 1, 0], [], []])
-        self.assertEqual(means, [0, 0, 0])
+        self.assertEqual(sets, [[-1], [1], [0]])
+        self.assertEqual(means, [-1, 1, 0])
 
         sets, means, spread = helpers.divide_list([-1, 1, 0], 2)
-        self.assertEqual(sets, [[-1, 1, 0], []])
-        self.assertEqual(means, [0, 0])
+        self.assertEqual(sets, [[-1, 0], [1]])
+        self.assertEqual(means, [-0.5, 1])

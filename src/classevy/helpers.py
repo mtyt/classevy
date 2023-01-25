@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Union, List
+from typing import Union, List, Tuple
 
 Numeric = Union[int, float, complex, np.number]
 
@@ -87,7 +87,7 @@ def pop_absmax(lst: List[Numeric]) -> Numeric:
 
 def divide_list(
     num_list: List[Numeric], n_sets: int
-) -> tuple[List[List[Numeric]], List[Numeric], Numeric]:
+) -> Tuple[List[List[Numeric]], List[Numeric], Numeric]:
     sets: list = [[] for _ in range(n_sets)]
     """Divide a list of numbers into a number of sets trying to minimize the spread
     over the mean values of each set.

@@ -52,6 +52,11 @@ least 1 preference.)
 For an example file, see [here (CSV)](https://github.com/mtyt/classevy/blob/main/data/students_example.csv)
 or [here (Excel)](https://github.com/mtyt/classevy/blob/main/data/students_example.xlsx).
 
+## Quickest way to try and experiment: Google Colab
+I've created a Colab Notebook, that will run in your browser without installing anything
+on your computer. You can find it here: [Colab link](https://colab.research.google.com/drive/1aDhEEC6j3JnIYbFFF08WmowhVsLVpGOz?usp=sharing).
+It also includes the same example file. But feel free to try with your own input files.
+
 ## Instructions to install repository (for Mac or Linux - or probably [git-bash on Windows](https://git-scm.com/download/win))
 To run the algorithm on your own computer, follow these instructions. I'm assuming you
 have python3 installed, as well as Jupyter.

@@ -121,14 +121,6 @@ there are other ways:
 Then in your browser, if you go to `http://127.0.0.1:8000/`, the web-app should show.
 Note that this is very experimental and I can not guarantee that it will work!
 
-# Even more experimental: web-app in the cloud
-I've somehow managed to get this docker container onto Azure cloud and it's running here:
-[classevy.azurewebsites.net](https://classevy.azurewebsites.net). But again, no guarantees
-here that it will work and I would not recommend putting actual real student information
-there because I have no idea how secure your data will be (probably not very!)
-If this turns out to be useful for people, I might continue working on it, but as they
-say here, I really haven't eaten much cheese of this kind of stuff.
-
 ## Feedback
 This project can be found on [GitHub](https://github.com/mtyt/classevy).
 
